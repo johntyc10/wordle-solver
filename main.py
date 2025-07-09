@@ -43,6 +43,19 @@ def filter_words(black_chars, yellow_chars, green_chars, five_letter_words):
 
 print("Note: Best openers are SALET, CRANE, etc")
 
+def simulate_wordle(answer, guessing_word):
+    green_pos = []
+    yellow_pos = []
+    
+    to_be_implicited_yellow_chars = []
+    for i in range(5):
+        if answer[i] == guessing_word[i]:
+            green_pos.append(i+1)
+        elif guessing_word[i] in answer and guessing_word[i] not in to_be_implicited_yellow_chars:
+            yellow_pos.append(i+1)
+            to_be_implicited_yellow_chars.append(guessing_word[i])
+    return "".join(green_pos), "".join(yellow_pos)
+
 
 while 1:
     word_input = input("The word: ")
