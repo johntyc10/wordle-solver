@@ -1,52 +1,87 @@
 with open("five_letter_words.txt", "r") as f:
     five_letter_words = f.read().split("\n")
 
-not_contain_chars = []
-contain_chars = [None]*5
+black_chars = []
+green_chars = [None]*5
+yellow_chars = {}
+
+for i in range(5):
+    yellow_chars[i] = []
 
 
-def contains(chars: list, word: str):
+def black_chars_check(chars: list, word: str):
     for char in chars:
         if char in word:
-            return True
-    return False
-
-
-def compare_word(contain_chars: list, word: str):
-    for i in range(5):
-        if not contain_chars[i]:
-            continue
-        if contain_chars[i] != word[i]:
             return False
     return True
 
 
-def filter_words(not_contain_chars, contain_chars, five_letter_words):
-    return_value = []
+def yellow_chars_check(yellow_chars: dict, word: str):
+    for pos in yellow_chars:
+        if word[pos] in yellow_chars[pos]:
+            return False
+    return True
+
+
+def green_chars_check(green_chars: list, word: str):
+    for i in range(5):
+        if not green_chars[i]:
+            continue
+        if green_chars[i] != word[i]:
+            return False
+    return True
+
+
+def filter_words(black_chars, yellow_chars, green_chars, five_letter_words):
+    possible_words = []
     for word in five_letter_words:
-        print(word, contains(not_contain_chars, word), compare_word(contain_chars, word))
-        if not contains(not_contain_chars, word) and compare_word(contain_chars, word):
-            return_value.append(word)
+        if black_chars_check(black_chars, word) and yellow_chars_check(yellow_chars, word) and green_chars_check(green_chars, word):
+            possible_words.append(word)
     
-    return return_value
+    return possible_words
+
+
+print("Note: Best openers are SALET, CRANE, etc")
 
 
 while 1:
-    not_contain_char_input = input("Not contain chars (a,b,c) >> ")
-    not_contain_char_input = not_contain_char_input.replace(" ", "")
-    not_contain_chars = list(set(not_contain_char_input.split(",") + not_contain_chars))
+    word_input = input("The word: ")
+    word_input = [i.lower() for i in word_input]
 
-    contain_char_input = input("Contain chars (a1,b2,c3) >> ")
-    contain_char_input = contain_char_input.replace(" ", "")
-    contain_char_input = contain_char_input.split(",")
-    for thing in contain_char_input:
-        if thing:
-            contain_chars[int(thing[1])-1] = thing[0]
+    green_chars_pos = input("Green characters positions [1-5] (eg. 135): ")
+    green_chars_pos = [int(i)-1 for i in green_chars_pos]
+
+    yellow_chars_pos = input("Yellow characters positions [1-5] (eg. 135): ")
+    yellow_chars_pos = [int(i)-1 for i in yellow_chars_pos]
+
+    to_remove_chars = []
+    for pos in green_chars_pos:
+        green_chars[pos] = word_input[pos]
+        to_remove_chars.append(word_input[pos])
+        for item in yellow_chars:
+            if word_input[pos] in yellow_chars[item]:
+                yellow_chars[item].remove(word_input[pos])
     
-    print(not_contain_chars)
-    print(contain_chars)
+    implicit_yellow_chars = []
+    for pos in yellow_chars_pos:
+        if word_input[pos] in green_chars:
+            continue
+        yellow_chars[pos] = list(set(yellow_chars[pos] + [word_input[pos]]))
+        to_remove_chars.append(word_input[pos])
+        implicit_yellow_chars.append(word_input[pos])
     
-    five_letter_words = filter_words(not_contain_chars, contain_chars, five_letter_words)
+    for i in range(5):
+        if word_input[i] in implicit_yellow_chars:
+            yellow_chars[i] = list(set(yellow_chars[i] + [word_input[i]]))
+        if green_chars[i]:
+            yellow_chars[i] = []
+    
+    for char in to_remove_chars:
+        word_input = [i for i in word_input if i != char]
+    
+    black_chars = list(set(black_chars + word_input))
+    
+    five_letter_words = filter_words(black_chars, yellow_chars, green_chars, five_letter_words)
 
     print(five_letter_words)
     
