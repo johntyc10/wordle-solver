@@ -62,7 +62,7 @@ while 1:
     sequence_of_guessing_words = []
 
     for att in range(6):
-        guessing_word = random.choice(five_letter_words) if att != 0 else "salet"
+        guessing_word = random.choice(persistent_five_letter_words)# if att != 0 else "salet"
         sequence_of_guessing_words.append(guessing_word)
 
         green_chars_pos = []
