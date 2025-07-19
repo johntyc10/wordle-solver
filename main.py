@@ -1,5 +1,8 @@
-with open("five_letter_words.txt", "r") as f:
-    five_letter_words = f.read().split("\n")
+import json
+
+
+with open("five_letter_words.json", "r") as f:
+    five_letter_words = json.load(f)
 
 black_chars = []
 green_chars = [None]*5
@@ -7,6 +10,8 @@ yellow_chars = {}
 
 for i in range(5):
     yellow_chars[i] = []
+
+print("Note: Best openers are SALET, CRANE, etc")
 
 
 def black_chars_check(chars: list, word: str):
@@ -20,6 +25,9 @@ def yellow_chars_check(yellow_chars: dict, word: str):
     for pos in yellow_chars:
         if word[pos] in yellow_chars[pos]:
             return False
+        for char in yellow_chars[pos]:
+            if char not in word:
+                return False
     return True
 
 
@@ -41,20 +49,34 @@ def filter_words(black_chars, yellow_chars, green_chars, five_letter_words):
     return possible_words
 
 
-print("Note: Best openers are SALET, CRANE, etc")
+def sort_by_reference(reference_list: list, target_list: list):
+    """
+    Sorts target_list according to the order defined in reference_list.
 
-def simulate_wordle(answer, guessing_word):
-    green_pos = []
-    yellow_pos = []
-    
-    to_be_implicited_yellow_chars = []
-    for i in range(5):
-        if answer[i] == guessing_word[i]:
-            green_pos.append(i+1)
-        elif guessing_word[i] in answer and guessing_word[i] not in to_be_implicited_yellow_chars:
-            yellow_pos.append(i+1)
-            to_be_implicited_yellow_chars.append(guessing_word[i])
-    return "".join(green_pos), "".join(yellow_pos)
+    Parameters:
+    - reference_list: List[str] — Defines the sorting order.
+    - target_list: List[str] — Subset of strings to be ordered.
+
+    Returns:
+    - A new List[str] with elements of target_list sorted.
+
+    Raises:
+    - ValueError: if target_list has elements not present in reference_list.
+    """
+    target_list_copy = target_list.copy()
+
+    # Build a position lookup for each element in reference_list
+    position_map = {value: index for index, value in enumerate(reference_list)}
+
+    # Check for unknown elements
+    unknown_items = [item for item in target_list if item not in position_map]
+    if unknown_items:
+        print(f"{unknown_items = }")
+        for word in unknown_items:
+            target_list_copy.remove(word)
+
+    # Sort using the position in reference_list as the key
+    return sorted(target_list_copy, key=lambda x: position_map[x])
 
 
 while 1:
@@ -97,4 +119,14 @@ while 1:
     five_letter_words = filter_words(black_chars, yellow_chars, green_chars, five_letter_words)
 
     print(five_letter_words)
+
+    with open("five_letter_words_order_by_freq.json", "r") as f:
+        five_letter_words_order_by_freq = json.load(f)
+        ordered_list = sort_by_reference(five_letter_words_order_by_freq, five_letter_words)
+    
+    print(f"Top <=20 commonly used words: {", ".join(ordered_list[:min(len(ordered_list), 20)])}")
+
+    if len(five_letter_words) == 1:
+        print(f"The word is: {five_letter_words[0]}")
+        break
     
