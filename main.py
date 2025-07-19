@@ -71,22 +71,22 @@ def sort_by_reference(reference_list: list, target_list: list):
     # Check for unknown elements
     unknown_items = [item for item in target_list if item not in position_map]
     if unknown_items:
-        print(f"{unknown_items = }")
+        # print(f"{unknown_items = }")
         for word in unknown_items:
             target_list_copy.remove(word)
 
     # Sort using the position in reference_list as the key
-    return sorted(target_list_copy, key=lambda x: position_map[x])
+    return sorted(target_list_copy, key=lambda x: position_map[x]) + unknown_items
 
 
-while 1:
+for i in range(6):
     word_input = input("The word: ")
     word_input = [i.lower() for i in word_input]
 
-    green_chars_pos = input("Green characters positions [1-5] (eg. 135): ")
+    green_chars_pos = input("Green characters positions [1-5] (eg. 135) (Press enter if nothing): ")
     green_chars_pos = [int(i)-1 for i in green_chars_pos]
 
-    yellow_chars_pos = input("Yellow characters positions [1-5] (eg. 135): ")
+    yellow_chars_pos = input("Yellow characters positions [1-5] (eg. 135) (Press enter if nothing): ")
     yellow_chars_pos = [int(i)-1 for i in yellow_chars_pos]
 
     to_remove_chars = []
@@ -100,6 +100,7 @@ while 1:
     implicit_yellow_chars = []
     for pos in yellow_chars_pos:
         if word_input[pos] in green_chars:
+            to_remove_chars.append(word_input[pos])
             continue
         yellow_chars[pos] = list(set(yellow_chars[pos] + [word_input[pos]]))
         to_remove_chars.append(word_input[pos])
@@ -118,15 +119,14 @@ while 1:
     
     five_letter_words = filter_words(black_chars, yellow_chars, green_chars, five_letter_words)
 
-    print(five_letter_words)
+    # print(five_letter_words)  # debug print
 
     with open("five_letter_words_order_by_freq.json", "r") as f:
         five_letter_words_order_by_freq = json.load(f)
         ordered_list = sort_by_reference(five_letter_words_order_by_freq, five_letter_words)
     
-    print(f"Top <=20 commonly used words: {", ".join(ordered_list[:min(len(ordered_list), 20)])}")
+    print(f"Top <=20 commonly used words that meets the criterias: \n{", ".join(ordered_list[:min(len(ordered_list), 20)])}")
 
     if len(five_letter_words) == 1:
         print(f"The word is: {five_letter_words[0]}")
         break
-    
