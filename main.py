@@ -125,7 +125,7 @@ for i in range(6):
         five_letter_words_order_by_freq = json.load(f)
         ordered_list = sort_by_reference(five_letter_words_order_by_freq, five_letter_words)
 
-    print(f"Top <=20 commonly used words that meets the criterias: \n{", ".join(ordered_list[:min(len(ordered_list), 20)])}")
+    print(f"Top {min(len(ordered_list), 20)} commonly used words that meet the criterias: \n{", ".join(ordered_list[:min(len(ordered_list), 20)])}")
 
     if len(five_letter_words) == 1:
         print(f"The word is: {five_letter_words[0]}")
