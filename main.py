@@ -45,7 +45,7 @@ def filter_words(black_chars, yellow_chars, green_chars, five_letter_words):
     for word in five_letter_words:
         if black_chars_check(black_chars, word) and yellow_chars_check(yellow_chars, word) and green_chars_check(green_chars, word):
             possible_words.append(word)
-    
+
     return possible_words
 
 
@@ -96,7 +96,7 @@ for i in range(6):
         for item in yellow_chars:
             if word_input[pos] in yellow_chars[item]:
                 yellow_chars[item].remove(word_input[pos])
-    
+
     implicit_yellow_chars = []
     for pos in yellow_chars_pos:
         if word_input[pos] in green_chars:
@@ -105,18 +105,18 @@ for i in range(6):
         yellow_chars[pos] = list(set(yellow_chars[pos] + [word_input[pos]]))
         to_remove_chars.append(word_input[pos])
         implicit_yellow_chars.append(word_input[pos])
-    
+
     for i in range(5):
         if word_input[i] in implicit_yellow_chars:
             yellow_chars[i] = list(set(yellow_chars[i] + [word_input[i]]))
         if green_chars[i]:
             yellow_chars[i] = []
-    
+
     for char in to_remove_chars:
         word_input = [i for i in word_input if i != char]
-    
+
     black_chars = list(set(black_chars + word_input))
-    
+
     five_letter_words = filter_words(black_chars, yellow_chars, green_chars, five_letter_words)
 
     # print(five_letter_words)  # debug print
@@ -124,7 +124,7 @@ for i in range(6):
     with open("five_letter_words_order_by_freq.json", "r") as f:
         five_letter_words_order_by_freq = json.load(f)
         ordered_list = sort_by_reference(five_letter_words_order_by_freq, five_letter_words)
-    
+
     print(f"Top <=20 commonly used words that meets the criterias: \n{", ".join(ordered_list[:min(len(ordered_list), 20)])}")
 
     if len(five_letter_words) == 1:
