@@ -130,3 +130,6 @@ for i in range(6):
     if len(five_letter_words) == 1:
         print(f"The word is: {five_letter_words[0]}")
         break
+    elif len(five_letter_words) == 0:
+        print("What on earth did you do?? Exiting!!")
+        break
