@@ -162,6 +162,7 @@ class WordleSimulator:
         print("Press ctrl+c to terminate")
         try:
             guesses_taken = []
+            games_played = 0
             for i in range(n):
                 print(f"GAME {i}/{n}")
 
@@ -172,17 +173,19 @@ class WordleSimulator:
                 guesses = self.play_one_game(secret)
                 if guesses <= 6:
                     guesses_taken.append(guesses)
+                games_played += 1
         except KeyboardInterrupt:
             pass  # intended way of terminating
         finally:
             print()
             print("=====STATISTICS REPORT=====")
+            print(f"First opener used: {self.best_opener}")
             print("Guesses taken distribution:")
             for i in range(1, 7):
                 print(f"{i}: {guesses_taken.count(i)}")
 
             print(f"Average guesses taken: {avg(guesses_taken):.3f}")
-            print(f"Success rate: {len(guesses_taken) / n * 100:.3f}%")
+            print(f"Success rate: {len(guesses_taken) / games_played * 100:.3f}%")
 
 if __name__ == "__main__":
     sim = WordleSimulator()
