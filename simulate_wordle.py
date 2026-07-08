@@ -3,6 +3,7 @@ from collections import defaultdict
 import math
 from typing import List, Dict, Tuple, Set, Iterable
 import random
+import time
 
 def avg(x: Iterable):
     if len(x) == 0:
@@ -156,13 +157,15 @@ class WordleSimulator:
 
     def simulate(self, n=100, first_opener="TARES"):
         print("=====SIMULATION START=====")
-        print("Press ctrl+c to terminate")
+        print("Press CTRL+C to terminate")
         try:
             self.first_opener = first_opener
             guesses_taken = []
+            time_taken = []
             games_played = 0
             for i in range(n):
                 print(f"-> GAME {i}/{n}")
+                timestamp = time.time_ns()
 
                 self.possible_words: Set[str] = set(self.all_words)
                 self.guess_history: List[Tuple[str, str]] = []
@@ -171,6 +174,7 @@ class WordleSimulator:
                 guesses = self.play_one_game(secret)
                 if guesses <= 6:
                     guesses_taken.append(guesses)
+                    time_taken.append((time.time_ns() - timestamp) * 1e-9)
                 games_played += 1
         except KeyboardInterrupt:
             pass  # intended way of terminating
@@ -183,8 +187,10 @@ class WordleSimulator:
                 print(f"{i}: {guesses_taken.count(i)}")
 
             print(f"Average guesses taken: {avg(guesses_taken):.3f}")
+            print(f"Average time taken per game: {avg(time_taken):.3f}s")
+            print(f"Average time taken per round: {sum(time_taken) / sum(guesses_taken):.3f}s")
             print(f"Success rate: {len(guesses_taken) / games_played * 100:.3f}%")  # couldnt care less about ZeroDivisionError here
 
 if __name__ == "__main__":
     sim = WordleSimulator()
-    sim.simulate(n=10, first_opener="TARES")
+    sim.simulate(n=100, first_opener="TARES")
