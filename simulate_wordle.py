@@ -1,18 +1,23 @@
 import json
 from collections import defaultdict, Counter
 import math
-from typing import List, Dict, Tuple, Set
+from typing import List, Dict, Tuple, Set, Iterable
+from tqdm import tqdm
+import random
 
-class WordleSolver:
+def avg(x: Iterable):
+    if len(x) == 0:
+        return 0
+    return sum(x) / len(x)
+
+class WordleSimulator:
     def __init__(self, all_words_path: str = "official_wordle_word_list.json",
                  freq_words_path: str = "five_letter_words_order_by_freq.json"):
         self.all_words: List[str] = self._load_words(all_words_path)
         self.freq_order: List[str] = self._load_words(freq_words_path)
         self.freq_dict: Dict[str, int] = {word: idx for idx, word in enumerate(self.freq_order)}
 
-        self.possible_words: Set[str] = set(self.all_words)
-        self.guess_history: List[Tuple[str, str]] = []
-        self.best_opener = "SALET"
+        self.best_opener = "TARES"
 
     def _load_words(self, path: str) -> List[str]:
         try:
@@ -25,26 +30,39 @@ class WordleSolver:
             print(f"Error loading {path}: {e}")
             return []
 
+    def normalize_feedback(self, guess: str, feedback: str):
+        """
+        Apply implicit yellow patch for real wordle feedback
+        eg. guess = eieio, feedback = YY---
+        output: YYYY-
+        """
+        feedback = feedback.upper()
+        result = [letter for letter in feedback]
+        for i in range(len(feedback)):
+            if feedback[i] == "Y":
+                for j in range(i+1, len(guess), 1):
+                    if guess[j] == guess[i]:
+                        result[j] = "Y"
+
+        return "".join(result)
+
     def get_feedback(self, guess: str, secret: str) -> str:
         """Correct Wordle feedback (greens first, then yellows)."""
         guess = guess.upper()
         secret = secret.upper()
         result = ['-'] * 5
-        secret_count = Counter(secret)
 
         # Greens
         for i in range(5):
             if guess[i] == secret[i]:
                 result[i] = 'G'
-                secret_count[guess[i]] -= 1
 
         # Yellows
         for i in range(5):
             if result[i] == '-':
                 letter = guess[i]
-                if letter in secret and secret_count[letter] > 0:
+                if letter in secret:
                     result[i] = 'Y'
-                    secret_count[letter] -= 1
 
         return ''.join(result)
 
@@ -74,25 +92,22 @@ class WordleSolver:
                 entropy -= p * math.log2(p)
         return entropy
 
-    def find_best_guess(self) -> Tuple[str, float]:
-        """Return best guess by entropy."""
+    def find_best_guesses(self) -> Tuple[str, float]:
+        """Return a list of word-entropy tuples sorted by entropy by descending order."""
         if len(self.possible_words) <= 1:
             return next(iter(self.possible_words), ""), 0.0
 
         possible_list = list(self.possible_words)
-        candidates = self.all_words  # Adjust for speed vs quality
+        candidates = self.all_words
 
-        best_word, best_entropy = "", -1.0
+        word_entropy: List[Tuple[str, int]] = []
 
         for cand in candidates:
             ent = self.compute_entropy(cand, possible_list)
-            if cand in self.possible_words:
-                ent += 0.01  # Slight preference for actual answers
-            if ent > best_entropy:
-                best_entropy = ent
-                best_word = cand
+            word_entropy.append((cand, ent))
 
-        return best_word, best_entropy
+        sorted_word_entropy = sorted(word_entropy, key=lambda x: x[1], reverse=True)
+        return sorted_word_entropy
 
     def get_sorted_possible(self) -> List[str]:
         """Possible words sorted by frequency."""
@@ -101,40 +116,74 @@ class WordleSolver:
             key=lambda w: self.freq_dict.get(w, 999999)
         )
 
-    def play(self):
-        print("=== Wordle Solver (Entropy-based) ===")
-        print(f"Recommended first guess: {self.best_opener}\n")
+    def is_valid_input(self, fb: str):
+        fb = fb.upper()
+        for letter in fb:
+            if letter not in ["G", "Y", "-"]:
+                return False
+        return True
 
+    def is_in_word_list(self, word: str):
+        return word in self.all_words
+
+    def play_one_game(self, secret: str):
+        """
+        Simulates playing one game of wordle using optimal approach.
+        secret: wordle answer
+        """
         round_num = 1
-        while len(self.possible_words) > 1 and round_num <= 6:
-            print(f"\n--- Round {round_num} | {len(self.possible_words)} possible words ---")
-
+        while round_num <= 6:
             if round_num == 1:
                 best_guess = self.best_opener
-                print(f"Recommended guess → {self.best_opener}")
             else:
-                best_guess, entropy = self.find_best_guess()
-                print(f"Recommended guess → {best_guess} (entropy: {entropy:.3f})")
+                word_entropy = self.find_best_guesses()
+                best_guess = word_entropy[0][0]
 
-            if len(self.possible_words) <= 15:
-                print("Remaining possibilities:", self.get_sorted_possible())
+            # Simulate user input
+            guess = best_guess
 
-            # User input
-            guess = input("\nWhat did you guess? (Enter = recommended): ").strip().upper()
-            if not guess:
-                guess = best_guess or self.best_opener
-
-            fb = input("Feedback (e.g. YG--G): ").strip().upper()
+            fb = self.get_feedback(guess, secret)
 
             self.update_possible_words(guess, fb)
+            if len(self.possible_words) == 1:
+                break
+
             round_num += 1
 
         if len(self.possible_words) == 1:
-            print(f"\n🎉 The answer is: {next(iter(self.possible_words))}")
+            print(f"Answer found after {round_num} rounds. The answer is {next(iter(self.possible_words))}")
         else:
-            print("\nRemaining possibilities:", self.get_sorted_possible()[:30])
+            print(f"Answer not found after 6 rounds. The answer is {secret}")
 
+        return round_num
+
+    def simulate(self, n=100):
+        print("=====SIMULATION START=====")
+        print("Press ctrl+c to terminate")
+        try:
+            guesses_taken = []
+            for i in range(n):
+                print(f"GAME {i}/{n}")
+
+                self.possible_words: Set[str] = set(self.all_words)
+                self.guess_history: List[Tuple[str, str]] = []
+
+                secret = random.choice(self.all_words)
+                guesses = self.play_one_game(secret)
+                if guesses <= 6:
+                    guesses_taken.append(guesses)
+        except KeyboardInterrupt:
+            pass  # intended way of terminating
+        finally:
+            print()
+            print("=====STATISTICS REPORT=====")
+            print("Guesses taken distribution:")
+            for i in range(1, 7):
+                print(f"{i}: {guesses_taken.count(i)}")
+
+            print(f"Average guesses taken: {avg(guesses_taken):.3f}")
+            print(f"Success rate: {len(guesses_taken) / n * 100:.3f}%")
 
 if __name__ == "__main__":
-    solver = WordleSolver()
-    solver.play()
+    sim = WordleSimulator()
+    sim.simulate(n=100)
