@@ -88,23 +88,22 @@ class WordleSolver:
                 entropy -= p * math.log2(p)
         return entropy
 
-    def find_best_guess(self) -> Tuple[str, float]:
-        """Return best guess by entropy."""
+    def find_best_guesses(self) -> Tuple[str, float]:
+        """Return a list of word-entropy tuples sorted by entropy by descending order."""
         if len(self.possible_words) <= 1:
             return next(iter(self.possible_words), ""), 0.0
 
         possible_list = list(self.possible_words)
         candidates = self.all_words  # Adjust for speed vs quality
 
-        best_word, best_entropy = "", -1.0
+        word_entropy: List[Tuple[str, int]] = []
 
         for cand in tqdm(candidates):
             ent = self.compute_entropy(cand, possible_list)
-            if ent > best_entropy:
-                best_entropy = ent
-                best_word = cand
+            word_entropy.append((cand, ent))
 
-        return best_word, best_entropy
+        sorted_word_entropy = sorted(word_entropy, key=lambda x: x[1], reverse=True)
+        return sorted_word_entropy
 
     def get_sorted_possible(self) -> List[str]:
         """Possible words sorted by frequency."""
@@ -120,9 +119,12 @@ class WordleSolver:
                 return False
         return True
 
+    def is_in_word_list(self, word: str):
+        return word in self.all_words
+
     def play(self):
         print("=== Wordle Solver (Entropy-based) ===")
-        print(f"Recommended first guess: {self.best_opener}\n")
+        print(f"Recommended first guess: TARES, SALET, CRANE, etc")
 
         round_num = 1
         while len(self.possible_words) > 1 and round_num <= 6:
@@ -132,18 +134,28 @@ class WordleSolver:
                 best_guess = self.best_opener
                 print(f"Recommended guess → {self.best_opener}")
             else:
-                best_guess, entropy = self.find_best_guess()
-                print(f"Recommended guess → {best_guess} (entropy: {entropy:.3f})")
+                print("Evaluating best guesses...")
+                word_entropy = self.find_best_guesses()
+                print("Done!")
+                best_guess = word_entropy[0][0]
+                print(f"Recommended guess → {best_guess} (entropy: {word_entropy[0][1]:.3f})")
+                for i in range(1, 5):
+                    word, entropy = word_entropy[i]
+                    print(f"{i+1}th guess → {word} (entropy: {entropy:.3f})")
 
             if len(self.possible_words) <= 15:
                 print("Remaining possibilities:", self.get_sorted_possible())
 
-            # User input
-            guess = input("\nWhat did you guess? (Enter = recommended): ").strip().upper()
-            if not guess:
-                guess = best_guess or self.best_opener
+            print()
 
-            fb = ""
+            # User input
+            guess = "a string which is not in word list and is not empty"
+            while guess and not self.is_in_word_list(guess):
+                guess = input("What did you guess? (Enter = recommended): ").strip().upper()
+            if not guess:
+                guess = best_guess
+
+            fb = "a string of which length is not equal to 5 and is not a valid input"
             while len(fb) != 5 or not self.is_valid_input(fb):
                 fb = input("Feedback (e.g. YG--G): ").strip().upper()
 
