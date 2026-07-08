@@ -2,6 +2,7 @@ import json
 from collections import defaultdict, Counter
 import math
 from typing import List, Dict, Tuple, Set
+from tqdm import tqdm
 
 class WordleSolver:
     def __init__(self, all_words_path: str = "official_wordle_word_list.json",
@@ -25,26 +26,39 @@ class WordleSolver:
             print(f"Error loading {path}: {e}")
             return []
 
+    def normalize_feedback(self, guess: str, feedback: str):
+        """
+        Apply implicit yellow patch for real wordle feedback
+        eg. guess = eieio, feedback = YY---
+        output: YYYY-
+        """
+        feedback = feedback.upper()
+        result = [letter for letter in feedback]
+        for i in range(len(feedback)):
+            if feedback[i] == "Y":
+                for j in range(i+1, len(guess), 1):
+                    if guess[j] == guess[i]:
+                        result[j] = "Y"
+
+        return "".join(result)
+
     def get_feedback(self, guess: str, secret: str) -> str:
         """Correct Wordle feedback (greens first, then yellows)."""
         guess = guess.upper()
         secret = secret.upper()
         result = ['-'] * 5
-        secret_count = Counter(secret)
 
         # Greens
         for i in range(5):
             if guess[i] == secret[i]:
                 result[i] = 'G'
-                secret_count[guess[i]] -= 1
 
         # Yellows
         for i in range(5):
             if result[i] == '-':
                 letter = guess[i]
-                if letter in secret and secret_count[letter] > 0:
+                if letter in secret:
                     result[i] = 'Y'
-                    secret_count[letter] -= 1
 
         return ''.join(result)
 
@@ -80,11 +94,11 @@ class WordleSolver:
             return next(iter(self.possible_words), ""), 0.0
 
         possible_list = list(self.possible_words)
-        candidates = self.all_words[:3000]  # Adjust for speed vs quality
+        candidates = self.all_words  # Adjust for speed vs quality
 
         best_word, best_entropy = "", -1.0
 
-        for cand in candidates:
+        for cand in tqdm(candidates):
             ent = self.compute_entropy(cand, possible_list)
             if cand in self.possible_words:
                 ent += 0.01  # Slight preference for actual answers
@@ -100,6 +114,13 @@ class WordleSolver:
             self.possible_words,
             key=lambda w: self.freq_dict.get(w, 999999)
         )
+
+    def is_valid_input(self, fb: str):
+        fb = fb.upper()
+        for letter in fb:
+            if letter not in ["G", "Y", "-"]:
+                return False
+        return True
 
     def play(self):
         print("=== Wordle Solver (Entropy-based) ===")
@@ -124,7 +145,11 @@ class WordleSolver:
             if not guess:
                 guess = best_guess or self.best_opener
 
-            fb = input("Feedback (e.g. YG--G): ").strip().upper()
+            fb = ""
+            while len(fb) != 5 or not self.is_valid_input(fb):
+                fb = input("Feedback (e.g. YG--G): ").strip().upper()
+
+            fb = self.normalize_feedback(guess, fb)
 
             self.update_possible_words(guess, fb)
             round_num += 1
@@ -138,3 +163,4 @@ class WordleSolver:
 if __name__ == "__main__":
     solver = WordleSolver()
     solver.play()
+    # print(solver.get_feedback("hello", "lmaoo"))
