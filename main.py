@@ -15,6 +15,10 @@ print("Note: Best openers are SALET, CRANE, etc")
 
 
 def black_chars_check(chars: list, word: str):
+    """
+    Return True if the word does not contain any characters from known black characters,
+    return False otherwise.
+    """
     for char in chars:
         if char in word:
             return False
@@ -22,6 +26,10 @@ def black_chars_check(chars: list, word: str):
 
 
 def yellow_chars_check(yellow_chars: dict, word: str):
+    """
+    Return True if the word satisfies yellow character conditions,
+    return False otherwise.
+    """
     for pos in yellow_chars:
         if word[pos] in yellow_chars[pos]:
             return False
@@ -32,6 +40,10 @@ def yellow_chars_check(yellow_chars: dict, word: str):
 
 
 def green_chars_check(green_chars: list, word: str):
+    """
+    Return True if the word satisfies green character conditions,
+    return False otherwise.
+    """
     for i in range(5):
         if not green_chars[i]:
             continue
