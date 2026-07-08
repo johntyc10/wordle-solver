@@ -3,6 +3,7 @@ let
 in pkgs.mkShell {
   packages = [
     (pkgs.python313.withPackages (python-pkgs: [
+      tqdm
     ]))
   ];
 }
