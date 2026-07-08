@@ -1,12 +1,12 @@
 import json
-from collections import defaultdict, Counter
+from collections import defaultdict
 import math
 from typing import List, Dict, Tuple, Set
 from tqdm import tqdm
 
 class WordleSolver:
-    def __init__(self, all_words_path: str = "official_wordle_word_list.json",
-                 freq_words_path: str = "five_letter_words_order_by_freq.json"):
+    def __init__(self, all_words_path: str = "./words/official_wordle_word_list.json",
+                 freq_words_path: str = "./words/five_letter_words_order_by_freq.json"):
         self.all_words: List[str] = self._load_words(all_words_path)
         self.freq_order: List[str] = self._load_words(freq_words_path)
         self.freq_dict: Dict[str, int] = {word: idx for idx, word in enumerate(self.freq_order)}

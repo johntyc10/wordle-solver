@@ -1,8 +1,7 @@
 import json
-from collections import defaultdict, Counter
+from collections import defaultdict
 import math
 from typing import List, Dict, Tuple, Set, Iterable
-from tqdm import tqdm
 import random
 
 def avg(x: Iterable):
@@ -11,8 +10,8 @@ def avg(x: Iterable):
     return sum(x) / len(x)
 
 class WordleSimulator:
-    def __init__(self, all_words_path: str = "official_wordle_word_list.json",
-                 freq_words_path: str = "five_letter_words_order_by_freq.json"):
+    def __init__(self, all_words_path: str = "./words/official_wordle_word_list.json",
+                 freq_words_path: str = "./words/five_letter_words_order_by_freq.json"):
         self.all_words: List[str] = self._load_words(all_words_path)
         self.freq_order: List[str] = self._load_words(freq_words_path)
         self.freq_dict: Dict[str, int] = {word: idx for idx, word in enumerate(self.freq_order)}
@@ -163,7 +162,7 @@ class WordleSimulator:
             guesses_taken = []
             games_played = 0
             for i in range(n):
-                print(f"GAME {i}/{n}")
+                print(f"-> GAME {i}/{n}")
 
                 self.possible_words: Set[str] = set(self.all_words)
                 self.guess_history: List[Tuple[str, str]] = []
@@ -188,4 +187,4 @@ class WordleSimulator:
 
 if __name__ == "__main__":
     sim = WordleSimulator()
-    sim.simulate(n=100, first_opener="TARES")
+    sim.simulate(n=10, first_opener="TARES")
