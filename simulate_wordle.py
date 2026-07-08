@@ -17,8 +17,6 @@ class WordleSimulator:
         self.freq_order: List[str] = self._load_words(freq_words_path)
         self.freq_dict: Dict[str, int] = {word: idx for idx, word in enumerate(self.freq_order)}
 
-        self.best_opener = "TARES"
-
     def _load_words(self, path: str) -> List[str]:
         try:
             with open(path, 'r', encoding='utf-8') as f:
@@ -134,7 +132,7 @@ class WordleSimulator:
         round_num = 1
         while round_num <= 6:
             if round_num == 1:
-                best_guess = self.best_opener
+                best_guess = self.first_opener
             else:
                 word_entropy = self.find_best_guesses()
                 best_guess = word_entropy[0][0]
@@ -157,10 +155,11 @@ class WordleSimulator:
 
         return round_num
 
-    def simulate(self, n=100):
+    def simulate(self, n=100, first_opener="TARES"):
         print("=====SIMULATION START=====")
         print("Press ctrl+c to terminate")
         try:
+            self.first_opener = first_opener
             guesses_taken = []
             games_played = 0
             for i in range(n):
@@ -176,17 +175,17 @@ class WordleSimulator:
                 games_played += 1
         except KeyboardInterrupt:
             pass  # intended way of terminating
-        finally:
+        finally:  # potential race conditions on every variable but i dont care
             print()
             print("=====STATISTICS REPORT=====")
-            print(f"First opener used: {self.best_opener}")
+            print(f"First opener used: {first_opener}")
             print("Guesses taken distribution:")
             for i in range(1, 7):
                 print(f"{i}: {guesses_taken.count(i)}")
 
             print(f"Average guesses taken: {avg(guesses_taken):.3f}")
-            print(f"Success rate: {len(guesses_taken) / games_played * 100:.3f}%")
+            print(f"Success rate: {len(guesses_taken) / games_played * 100:.3f}%")  # couldnt care less about ZeroDivisionError here
 
 if __name__ == "__main__":
     sim = WordleSimulator()
-    sim.simulate(n=100)
+    sim.simulate(n=100, first_opener="TARES")
