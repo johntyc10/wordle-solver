@@ -94,7 +94,7 @@ class WordleSolver:
             return next(iter(self.possible_words), ""), 0.0
 
         possible_list = list(self.possible_words)
-        candidates = self.all_words  # Adjust for speed vs quality
+        candidates = self.all_words
 
         word_entropy: List[Tuple[str, int]] = []
 
@@ -173,4 +173,3 @@ class WordleSolver:
 if __name__ == "__main__":
     solver = WordleSolver()
     solver.play()
-    # print(solver.get_feedback("hello", "lmaoo"))
