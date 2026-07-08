@@ -100,8 +100,6 @@ class WordleSolver:
 
         for cand in tqdm(candidates):
             ent = self.compute_entropy(cand, possible_list)
-            if cand in self.possible_words:
-                ent += 0.01  # Slight preference for actual answers
             if ent > best_entropy:
                 best_entropy = ent
                 best_word = cand
