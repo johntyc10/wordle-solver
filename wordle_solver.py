@@ -16,12 +16,16 @@ except ImportError:
 
 LOG_FILE_PATH = "./logs/wordle_solver/" + datetime.now().strftime("%Y-%m-%d_%H-%M-%S.txt")
 
-def log(string: str = ""):
-    print(string)
+def log(*values, sep=" ", end="\n"):
+    if not values:
+        string = ""
+    else:
+        string = " ".join([str(i) for i in values])
+    print(string, sep=sep, end=end)
     path = Path(LOG_FILE_PATH)
     path.parent.mkdir(parents=True, exist_ok=True)
     with open(LOG_FILE_PATH, "a") as f:
-        f.write(string + "\n")
+        f.write(string + end)
 
 class WordleSolver:
     def __init__(self, all_words_path: str = "./words/official_wordle_word_list.json",
