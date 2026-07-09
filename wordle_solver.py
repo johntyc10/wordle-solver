@@ -2,9 +2,17 @@ import json
 from collections import defaultdict
 import math
 from typing import List, Dict, Tuple, Set
-from tqdm import tqdm
 from datetime import datetime
 from pathlib import Path
+
+# tqdm fallback
+try:
+    from tqdm import tqdm
+    print("Module tqdm is installed, loading bar will appear.")
+except ImportError:
+    print("Module tqdm is not detected, loading bar will be gone.")
+    def tqdm(iterable, **kwargs):
+        return iterable
 
 LOG_FILE_PATH = "./logs/wordle_solver/" + datetime.now().strftime("%Y-%m-%d_%H-%M-%S.txt")
 
