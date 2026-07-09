@@ -4,6 +4,17 @@ import math
 from typing import List, Dict, Tuple, Set, Iterable
 import random
 import time
+from datetime import datetime
+from pathlib import Path
+
+LOG_FILE_PATH = "./logs/wordle_simulator/" + datetime.now().strftime("%Y-%m-%d_%H-%M-%S.txt")
+
+def log(string: str = ""):
+    print(string)
+    path = Path(LOG_FILE_PATH)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with open(LOG_FILE_PATH, "a") as f:
+        f.write(string + "\n")
 
 def avg(x: Iterable):
     if len(x) == 0:
@@ -22,10 +33,10 @@ class WordleSimulator:
             with open(path, 'r', encoding='utf-8') as f:
                 data = json.load(f)
             words = [w.strip().upper() for w in data if len(w.strip()) == 5]
-            print(f"Loaded {len(words)} words from {path}")
+            log(f"Loaded {len(words)} words from {path}")
             return words
         except Exception as e:
-            print(f"Error loading {path}: {e}")
+            log(f"Error loading {path}: {e}")
             return []
 
     def normalize_feedback(self, guess: str, feedback: str):
@@ -149,22 +160,22 @@ class WordleSimulator:
             round_num += 1
 
         if len(self.possible_words) == 1:
-            print(f"Answer found after {round_num} rounds. The answer is {next(iter(self.possible_words))}")
+            log(f"Answer found after {round_num} rounds. The answer is {next(iter(self.possible_words))}")
         else:
-            print(f"Answer not found after 6 rounds. The answer is {secret}")
+            log(f"Answer not found after 6 rounds. The answer is {secret}")
 
         return round_num
 
     def simulate(self, n=100, first_opener="TARES"):
-        print("=====SIMULATION START=====")
-        print("Press CTRL+C to terminate")
+        log("=====SIMULATION START=====")
+        log("Press CTRL+C to terminate")
         try:
             self.first_opener = first_opener
             guesses_taken = []
             time_taken = []
             games_played = 0
             for i in range(n):
-                print(f"-> GAME {i}/{n}")
+                log(f"-> GAME {i}/{n}")
                 timestamp = time.time_ns()
 
                 self.possible_words: Set[str] = set(self.all_words)
@@ -179,18 +190,18 @@ class WordleSimulator:
         except KeyboardInterrupt:
             pass  # intended way of terminating
         finally:  # potential race conditions on every variable but i dont care
-            print()
-            print("=====STATISTICS REPORT=====")
-            print(f"First opener used: {first_opener}")
-            print("Guesses taken distribution:")
+            log()
+            log("=====STATISTICS REPORT=====")
+            log(f"First opener used: {first_opener}")
+            log("Guesses taken distribution:")
             for i in range(1, 7):
-                print(f"{i}: {guesses_taken.count(i)}")
+                log(f"{i}: {guesses_taken.count(i)}")
 
-            print(f"Average guesses taken: {avg(guesses_taken):.3f}")
-            print(f"Average time taken per game: {avg(time_taken):.3f}s")
-            print(f"Average time taken per round: {sum(time_taken) / sum(guesses_taken):.3f}s")
-            print(f"Success rate: {len(guesses_taken) / games_played * 100:.3f}%")  # couldnt care less about ZeroDivisionError here
+            log(f"Average guesses taken: {avg(guesses_taken):.3f}")
+            log(f"Average time taken per game: {avg(time_taken):.3f}s")
+            log(f"Average time taken per round: {sum(time_taken) / sum(guesses_taken):.3f}s")
+            log(f"Success rate: {len(guesses_taken) / games_played * 100:.3f}%")  # couldnt care less about ZeroDivisionError here
 
 if __name__ == "__main__":
     sim = WordleSimulator()
-    sim.simulate(n=100, first_opener="TARES")
+    sim.simulate(n=10000, first_opener="TARES")

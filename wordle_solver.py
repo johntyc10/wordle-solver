@@ -3,6 +3,17 @@ from collections import defaultdict
 import math
 from typing import List, Dict, Tuple, Set
 from tqdm import tqdm
+from datetime import datetime
+from pathlib import Path
+
+LOG_FILE_PATH = "./logs/wordle_solver/" + datetime.now().strftime("%Y-%m-%d_%H-%M-%S.txt")
+
+def log(string: str = ""):
+    print(string)
+    path = Path(LOG_FILE_PATH)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with open(LOG_FILE_PATH, "a") as f:
+        f.write(string + "\n")
 
 class WordleSolver:
     def __init__(self, all_words_path: str = "./words/official_wordle_word_list.json",
@@ -13,17 +24,17 @@ class WordleSolver:
 
         self.possible_words: Set[str] = set(self.all_words)
         self.guess_history: List[Tuple[str, str]] = []
-        self.best_opener = "SALET"
+        self.best_opener = "TARES"
 
     def _load_words(self, path: str) -> List[str]:
         try:
             with open(path, 'r', encoding='utf-8') as f:
                 data = json.load(f)
             words = [w.strip().upper() for w in data if len(w.strip()) == 5]
-            print(f"Loaded {len(words)} words from {path}")
+            log(f"Loaded {len(words)} words from {path}")
             return words
         except Exception as e:
-            print(f"Error loading {path}: {e}")
+            log(f"Error loading {path}: {e}")
             return []
 
     def normalize_feedback(self, guess: str, feedback: str):
@@ -123,30 +134,30 @@ class WordleSolver:
         return word in self.all_words
 
     def play(self):
-        print("=== Wordle Solver (Entropy-based) ===")
-        print(f"Recommended first guess: TARES, SALET, CRANE, etc")
+        log("=== Wordle Solver (Entropy-based) ===")
+        log(f"Recommended first guess: TARES, SALET, CRANE, etc")
 
         round_num = 1
         while len(self.possible_words) > 1 and round_num <= 6:
-            print(f"\n--- Round {round_num} | {len(self.possible_words)} possible words ---")
+            log(f"\n--- Round {round_num} | {len(self.possible_words)} possible words ---")
 
             if round_num == 1:
                 best_guess = self.best_opener
-                print(f"Recommended guess → {self.best_opener}")
+                log(f"Recommended guess → {self.best_opener}")
             else:
-                print("Evaluating best guesses...")
+                log("Evaluating best guesses...")
                 word_entropy = self.find_best_guesses()
-                print("Done!")
+                log("Done!")
                 best_guess = word_entropy[0][0]
-                print(f"Recommended guess → {best_guess} (entropy: {word_entropy[0][1]:.3f})")
+                log(f"Recommended guess → {best_guess} (entropy: {word_entropy[0][1]:.3f})")
                 for i in range(1, 5):
                     word, entropy = word_entropy[i]
-                    print(f"{i+1}th guess → {word} (entropy: {entropy:.3f})")
+                    log(f"{i+1}th guess → {word} (entropy: {entropy:.3f})")
 
             if len(self.possible_words) <= 15:
-                print("Remaining possibilities:", self.get_sorted_possible())
+                log("Remaining possibilities:", self.get_sorted_possible())
 
-            print()
+            log()
 
             # User input
             guess = "a string which is not in word list and is not empty"
@@ -165,9 +176,9 @@ class WordleSolver:
             round_num += 1
 
         if len(self.possible_words) == 1:
-            print(f"\n🎉 The answer is: {next(iter(self.possible_words))}")
+            log(f"\n🎉 The answer is: {next(iter(self.possible_words))}")
         else:
-            print("\nRemaining possibilities:", self.get_sorted_possible()[:30])
+            log("\nRemaining possibilities:", self.get_sorted_possible()[:30])
 
 
 if __name__ == "__main__":
