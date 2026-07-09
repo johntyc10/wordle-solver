@@ -45,7 +45,7 @@ The word that the solver failed to solve is ZILLS.
 git clone https://github.com/johntyc10/wordle-solver.git && cd wordle-solver
 ```
 
-2. Install tqdm module
+2. (Optional) Install tqdm module
 ```bash
 pip install tqdm  # or any other methods of your liking
 ```
