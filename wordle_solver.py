@@ -146,7 +146,7 @@ class WordleSolver:
         return word in self.all_words
 
     def play(self, evaluate_entropy_in_first_round=False):
-        log("=== Wordle Solver (Entropy-based) ===")
+        log("===== Wordle Solver (Entropy-based) =====")
         log(f"Recommended first guess: TARES, SALET, CRANE, etc")
 
         round_num = 1
@@ -185,7 +185,7 @@ class WordleSolver:
             if not guess:
                 guess = best_guess
 
-            log(f"You chose {guess}.")
+            log(f"{guess} is chosen.")
 
             fb = "a string of which length is not equal to 5 and is not a valid input"
             while 1:
@@ -193,6 +193,8 @@ class WordleSolver:
                 if len(fb) == 5 and self.is_valid_feedback(fb):
                     break
                 log("Invalid input, please try again.")
+
+            log(f"The feedback is {fb}.")
 
             fb = self.normalize_feedback(guess, fb)
 
