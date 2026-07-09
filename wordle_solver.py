@@ -133,7 +133,7 @@ class WordleSolver:
     def is_in_word_list(self, word: str):
         return word in self.all_words
 
-    def play(self):
+    def play(self, evaluate_entropy_in_first_round=False):
         log("=== Wordle Solver (Entropy-based) ===")
         log(f"Recommended first guess: TARES, SALET, CRANE, etc")
 
@@ -141,9 +141,13 @@ class WordleSolver:
         while len(self.possible_words) > 1 and round_num <= 6:
             log(f"\n--- Round {round_num} | {len(self.possible_words)} possible words ---")
 
-            if round_num == 1:
+            if round_num == 1 and not evaluate_entropy_in_first_round:
                 best_guess = self.best_opener
-                log(f"Recommended guess → {self.best_opener}")
+                log("Recommended guess → TARES (entropy: 6.159)")
+                log("2th guess → LARES (entropy: 6.115)")
+                log("3th guess → RALES (entropy: 6.097)")
+                log("4th guess → RATES (entropy: 6.084)")
+                log("5th guess → RANES (entropy: 6.077)")
             else:
                 log("Evaluating best guesses...")
                 word_entropy = self.find_best_guesses()
