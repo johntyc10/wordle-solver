@@ -123,7 +123,7 @@ class WordleSolver:
             key=lambda w: self.freq_dict.get(w, 999999)
         )
 
-    def is_valid_input(self, fb: str):
+    def is_valid_feedback(self, fb: str):
         fb = fb.upper()
         for letter in fb:
             if letter not in ["G", "Y", "B"]:
@@ -143,20 +143,20 @@ class WordleSolver:
 
             if round_num == 1 and not evaluate_entropy_in_first_round:
                 best_guess = self.best_opener
-                log("Recommended guess → TARES (entropy: 6.159)")
-                log("2th guess → LARES (entropy: 6.115)")
-                log("3th guess → RALES (entropy: 6.097)")
-                log("4th guess → RATES (entropy: 6.084)")
-                log("5th guess → RANES (entropy: 6.077)")
+                log("Recommended guess: TARES (entropy: 6.159)")
+                log("2th guess: LARES (entropy: 6.115)")
+                log("3th guess: RALES (entropy: 6.097)")
+                log("4th guess: RATES (entropy: 6.084)")
+                log("5th guess: RANES (entropy: 6.077)")
             else:
                 log("Evaluating best guesses...")
                 word_entropy = self.find_best_guesses()
                 log("Done!")
                 best_guess = word_entropy[0][0]
-                log(f"Recommended guess → {best_guess} (entropy: {word_entropy[0][1]:.3f})")
+                log(f"Recommended guess: {best_guess} (entropy: {word_entropy[0][1]:.3f})")
                 for i in range(1, 5):
                     word, entropy = word_entropy[i]
-                    log(f"{i+1}th guess → {word} (entropy: {entropy:.3f})")
+                    log(f"{i+1}th guess: {word} (entropy: {entropy:.3f})")
 
             if len(self.possible_words) <= 15:
                 log("Remaining possibilities:", self.get_sorted_possible())
@@ -165,14 +165,22 @@ class WordleSolver:
 
             # User input
             guess = "a string which is not in word list and is not empty"
-            while guess and not self.is_in_word_list(guess):
+            while 1:
                 guess = input("What did you guess? (Enter = recommended): ").strip().upper()
+                if not guess or self.is_in_word_list(guess):
+                    break
+                log("Invalid input, please try again.")
             if not guess:
                 guess = best_guess
 
+            log(f"You chose {guess}.")
+
             fb = "a string of which length is not equal to 5 and is not a valid input"
-            while len(fb) != 5 or not self.is_valid_input(fb):
-                fb = input("Feedback (e.g. YGBBG): ").strip().upper()
+            while 1:
+                fb = input("Feedback (e.g. YGBBG, case insensitive): ").strip().upper()
+                if len(fb) == 5 and self.is_valid_feedback(fb):
+                    break
+                log("Invalid input, please try again.")
 
             fb = self.normalize_feedback(guess, fb)
 

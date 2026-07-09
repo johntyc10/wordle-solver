@@ -125,7 +125,7 @@ class WordleSimulator:
             key=lambda w: self.freq_dict.get(w, 999999)
         )
 
-    def is_valid_input(self, fb: str):
+    def is_valid_feedback(self, fb: str):
         fb = fb.upper()
         for letter in fb:
             if letter not in ["G", "Y", "B"]:
@@ -167,7 +167,7 @@ class WordleSimulator:
         return round_num
 
     def simulate(self, n=100, first_opener="TARES"):
-        log("=====SIMULATION START=====")
+        log("===== SIMULATION START =====")
         log("Press CTRL+C to terminate")
         try:
             self.first_opener = first_opener
@@ -191,7 +191,7 @@ class WordleSimulator:
             pass  # intended way of terminating
         finally:  # potential race conditions on every variable but i dont care
             log()
-            log("=====STATISTICS REPORT=====")
+            log("===== STATISTICS REPORT =====")
             log(f"First opener used: {first_opener}")
             log("Guesses taken distribution:")
             for i in range(1, 7):
