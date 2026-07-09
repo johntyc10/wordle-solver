@@ -40,8 +40,8 @@ class WordleSolver:
     def normalize_feedback(self, guess: str, feedback: str):
         """
         Apply implicit yellow patch for real wordle feedback
-        eg. guess = eieio, feedback = YY---
-        output: YYYY-
+        eg. guess = eieio, feedback = YYBBB
+        output: YYYYB
         """
         feedback = feedback.upper()
         result = [letter for letter in feedback]
@@ -57,7 +57,7 @@ class WordleSolver:
         """Correct Wordle feedback (greens first, then yellows)."""
         guess = guess.upper()
         secret = secret.upper()
-        result = ['-'] * 5
+        result = ['B'] * 5
 
         # Greens
         for i in range(5):
@@ -66,7 +66,7 @@ class WordleSolver:
 
         # Yellows
         for i in range(5):
-            if result[i] == '-':
+            if result[i] == 'B':
                 letter = guess[i]
                 if letter in secret:
                     result[i] = 'Y'
@@ -126,7 +126,7 @@ class WordleSolver:
     def is_valid_input(self, fb: str):
         fb = fb.upper()
         for letter in fb:
-            if letter not in ["G", "Y", "-"]:
+            if letter not in ["G", "Y", "B"]:
                 return False
         return True
 
@@ -172,7 +172,7 @@ class WordleSolver:
 
             fb = "a string of which length is not equal to 5 and is not a valid input"
             while len(fb) != 5 or not self.is_valid_input(fb):
-                fb = input("Feedback (e.g. YG--G): ").strip().upper()
+                fb = input("Feedback (e.g. YGBBG): ").strip().upper()
 
             fb = self.normalize_feedback(guess, fb)
 
