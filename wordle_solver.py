@@ -24,8 +24,10 @@ def log(*values, sep=" ", end="\n"):
     print(string, sep=sep, end=end)
     path = Path(LOG_FILE_PATH)
     path.parent.mkdir(parents=True, exist_ok=True)
+
+    time_now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     with open(LOG_FILE_PATH, "a") as f:
-        f.write(string + end)
+        f.write(f"{time_now} | {string}".strip() + end)
 
 class WordleSolver:
     def __init__(self, all_words_path: str = "./words/official_wordle_word_list.json",
@@ -151,7 +153,8 @@ class WordleSolver:
 
         round_num = 1
         while len(self.possible_words) > 1 and round_num <= 6:
-            log(f"\n--- Round {round_num} | {len(self.possible_words)} possible words ---")
+            log()
+            log(f"--- Round {round_num} | {len(self.possible_words)} possible words ---")
 
             if round_num == 1 and not evaluate_entropy_in_first_round:
                 best_guess = self.best_opener
@@ -202,9 +205,11 @@ class WordleSolver:
             round_num += 1
 
         if len(self.possible_words) == 1:
-            log(f"\n🎉 The answer is: {next(iter(self.possible_words))}")
+            log()
+            log(f"🎉 The answer is: {next(iter(self.possible_words))}")
         else:
-            log("\nRemaining possibilities:", self.get_sorted_possible()[:30])
+            log()
+            log("Remaining possibilities:", self.get_sorted_possible()[:30])
 
 
 if __name__ == "__main__":
