@@ -42,7 +42,7 @@ class WordleSolver:
 
     def _load_words(self, path: str) -> List[str]:
         try:
-            with open(path, 'r', encoding='utf-8') as f:
+            with open(path, "r", encoding="utf-8") as f:
                 data = json.load(f)
             words = [w.strip().upper() for w in data if len(w.strip()) == 5]
             log(f"Loaded {len(words)} words from {path}")
@@ -71,21 +71,21 @@ class WordleSolver:
         """Correct Wordle feedback (greens first, then yellows)."""
         guess = guess.upper()
         secret = secret.upper()
-        result = ['B'] * 5
+        result = ["B"] * 5
 
         # Greens
         for i in range(5):
             if guess[i] == secret[i]:
-                result[i] = 'G'
+                result[i] = "G"
 
         # Yellows
         for i in range(5):
-            if result[i] == 'B':
+            if result[i] == "B":
                 letter = guess[i]
                 if letter in secret:
-                    result[i] = 'Y'
+                    result[i] = "Y"
 
-        return ''.join(result)
+        return "".join(result)
 
     def update_possible_words(self, guess: str, feedback: str):
         feedback = feedback.upper()
