@@ -93,11 +93,17 @@ class WordleSolver:
                 result[i] = "G"
 
         # Yellows
+        secret_count = defaultdict(int)  # keeps track of which letters have been assigned yellow (secret_count[letter] > 0)
+        for i in range(5):
+            if result[i] != "G":
+                secret_count[secret[i]] += 1
+
         for i in range(5):
             if result[i] == "B":
                 letter = guess[i]
-                if letter in secret:
+                if letter in secret_count and secret_count[letter] > 0:
                     result[i] = "Y"
+                    secret_count[letter] -= 1
 
         return "".join(result)
 
@@ -208,7 +214,6 @@ class WordleSolver:
 
             log(f"The feedback is {fb}.")
 
-            fb = self.normalize_feedback(guess, fb)
             self.update_possible_words(guess, fb)
             round_num += 1
 
