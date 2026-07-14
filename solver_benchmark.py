@@ -26,32 +26,64 @@ class WordleSolverBenchmark(BaseWordle):
         self.guess_history: List[Tuple[str, str]] = []
 
     def save_statistics(self):
-        filename = f"benchmark_guess_histories.json"
         dir = Path(f"./output/{datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}")
         dir.mkdir(parents=True, exist_ok=True)
 
-        with open(dir / filename, "w") as f:
+        with open(dir / "benchmark_guess_histories.json", "w") as f:
             json.dump(self.guess_histories, f, indent=4)
 
+        with open(dir / "statistics_report.json", "w") as f:
+            json.dump(self.generate_statistics(), f, indent=4)
+
+    def generate_statistics(self):  # TODO: write tests
+        """Generate statistics report as dictionary."""
+        guesses_taken = [len(hist) for hist in self.guess_histories]
+        distribution = [guesses_taken.count(i) for i in range(1, 7)]
+
+        total_games = self.games_played
+        successful_games = len(self.guess_histories)
+
+        avg_guesses = avg(guesses_taken)
+        avg_time_per_game = avg(self.time_taken)
+        total_rounds = sum(guesses_taken)
+        avg_time_per_round = sum(self.time_taken) / total_rounds if total_rounds > 0 else 0
+
+        end_time = time.time()
+        sim_time_taken = end_time - self.start_time
+
+        stats = {
+            "guesses_taken_distribution": distribution,
+            "average_guesses_taken": avg_guesses,
+            "average_time_per_game": avg_time_per_game,
+            "average_time_per_round": avg_time_per_round,
+            "total_games_played": total_games,
+            "successful_games": successful_games,
+            "simulation_start_time": self.start_time,
+            "simulation_end_time": end_time,
+            "simulation_time_taken": sim_time_taken
+        }
+        return stats
+
     def print_statistics(self):
+        stats = self.generate_statistics()
+
         log()
         log("===== STATISTICS REPORT =====")
         log(f"First opener used: {self.first_opener}")
 
-        guesses_taken = [len(hist) for hist in self.guess_histories]
         log("Guesses taken distribution:")
         for i in range(1, 7):
-            log(f"{i}: {guesses_taken.count(i)}")
+            log(f"{i}: {stats['guesses_taken_distribution'][i-1]}")
 
-        log(f"Average guesses taken: {avg(guesses_taken)}")
-        log(f"Average time taken per game: {avg(self.time_taken)}s")
-        log(f"Average time taken per round: {sum(self.time_taken) / sum(guesses_taken)}s")
-        log(f"Success rate: {len(guesses_taken) / self.games_played * 100}% ({len(guesses_taken)}/{self.games_played})")  # couldnt care less about ZeroDivisionError here
+        log(f"Average guesses taken: {stats['average_guesses_taken']}")
+        log(f"Average time taken per game: {stats['average_time_per_game']}s")
+        log(f"Average time taken per round: {stats['average_time_per_round']}s")
+        log(f"Success rate: {stats['successful_games'] / stats['total_games_played'] * 100}% ({stats['successful_games']}/{stats['total_games_played']})")  # couldnt care less about ZeroDivisionError here
 
         log()
-        log(f"Start time: {datetime.fromtimestamp(self.start_time).strftime("%Y/%m/%d, %H:%M:%S")}")
-        log(f"End time: {datetime.now().strftime("%Y/%m/%d, %H:%M:%S")}")
-        log(f"Time taken: {timedelta(seconds=time.time() - self.start_time)}")
+        log(f"Start time: {datetime.fromtimestamp(stats['simulation_start_time']).strftime("%Y/%m/%d, %H:%M:%S")}")
+        log(f"End time: {datetime.fromtimestamp(stats['simulation_end_time']).strftime("%Y/%m/%d, %H:%M:%S")}")
+        log(f"Time taken: {timedelta(seconds=stats['simulation_time_taken'])}")
 
 
     def play_one_game(self, secret: str) -> bool:
