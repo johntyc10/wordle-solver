@@ -17,7 +17,7 @@ except ImportError:
 
 def get_log_file_path() -> Path:
     """Generate log file path using pathlib."""
-    logs_dir = Path("./logs/wordle_solver")
+    logs_dir = Path("./logs")
     logs_dir.mkdir(parents=True, exist_ok=True)
     timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     return logs_dir / f"{timestamp}.txt"
@@ -116,7 +116,7 @@ class BaseWordle:
             w for w in self.possible_words
             if self.get_feedback(guess, w) == feedback
         }
-        self.guess_history.append((guess.upper(), feedback))
+        self.guess_history.append((guess.upper(), feedback, len(self.possible_words)))
 
     def compute_entropy(self, guess: str, possible: List[str]) -> float:
         """Shannon entropy for a guess."""

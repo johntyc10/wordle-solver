@@ -49,16 +49,17 @@ class WordleSimulator(BaseWordle):
         log(f"Average time taken per round: {sum(self.time_taken) / sum(guesses_taken):.3f}s")
         log(f"Success rate: {len(guesses_taken) / self.games_played * 100:.3f}% ({len(guesses_taken)}/{self.games_played})")  # couldnt care less about ZeroDivisionError here
 
-    def play_one_game(self, secret: str):
+    def play_one_game(self, secret: str) -> bool:
         """
         Simulates playing one game of wordle using optimal approach.
         secret: wordle answer
+        Returns True if the solver successfully solved the wordle, returns False otherwise.
         """
-        finished_rounds = 0
-        while finished_rounds < 6:
-            log(f"  => Playing round {finished_rounds + 1}")
+        success = False
+        for round_num in range(1, 7):
+            log(f"  => Playing round {round_num} ({len(self.possible_words)} words left)")
 
-            if finished_rounds == 0:
+            if round_num == 1:
                 best_guess = self.first_opener
             else:
                 word_entropy = self.find_best_guesses()
@@ -70,21 +71,21 @@ class WordleSimulator(BaseWordle):
             fb = self.get_feedback(guess, secret)
 
             self.update_possible_words(guess, fb)
-            finished_rounds += 1
-
-            if len(self.possible_words) == 1:
-                finished_rounds += 1
-                self.guess_history.append((next(iter(self.possible_words)), "GGGGG"))
-                break
-
             assert len(self.possible_words) >= 1
 
-        if len(self.possible_words) == 1:
-            log(f"-> Answer found after {finished_rounds} rounds. The answer is {next(iter(self.possible_words))}")
-        else:
-            log(f"-> Answer not found after 6 rounds. The answer is {secret}")
+            if len(self.possible_words) == 1:
+                # play one more round of correct answer as guess
+                if round_num <= 5:
+                    self.guess_history.append((next(iter(self.possible_words)), "GGGGG", 1))
+                    success = True
+                break
 
-        return finished_rounds
+        if success:
+            log(f"-> Answer found after {len(self.guess_history)} rounds. The secret is {next(iter(self.possible_words))}")
+        else:
+            log(f"-> Answer not found after 6 rounds.")
+
+        return success
 
     def simulate(self, n=100, first_opener="TARES"):
         log("===== SIMULATION START =====")
@@ -95,14 +96,14 @@ class WordleSimulator(BaseWordle):
             self.time_taken = []
             self.games_played = 0
             for i in range(n):
-                log(f"-> GAME {i}/{n}")
-                timestamp = time.time_ns()
-
                 self.reset()
 
                 secret = random.choice(list(self.possible_words))
-                guesses = self.play_one_game(secret)
-                if guesses <= 6:
+                log(f"-> GAME {i}/{n} (secret: {secret})")
+
+                timestamp = time.time_ns()
+                success = self.play_one_game(secret)
+                if success:
                     self.guess_histories.append(self.guess_history)
                     self.time_taken.append((time.time_ns() - timestamp) * 1e-9)
                 self.games_played += 1
@@ -114,4 +115,4 @@ class WordleSimulator(BaseWordle):
 
 if __name__ == "__main__":
     sim = WordleSimulator()
-    sim.simulate(n=5, first_opener="TARES")
+    sim.simulate(n=1000, first_opener="TARES")  # TODO: accept arguments in command line
