@@ -1,152 +1,64 @@
-import json
-from collections import defaultdict
-import math
 from typing import List, Dict, Tuple, Set, Iterable
 import random
 import time
+import copy
+from wordle_solver import BaseWordle, log
 from datetime import datetime
 from pathlib import Path
-
-LOG_FILE_PATH = "./logs/wordle_simulator/" + datetime.now().strftime("%Y-%m-%d_%H-%M-%S.txt")
-
-def log(*values, sep=" ", end="\n"):
-    if not values:
-        string = ""
-    else:
-        string = " ".join([str(i) for i in values])
-    print(string, sep=sep, end=end)
-    path = Path(LOG_FILE_PATH)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with open(LOG_FILE_PATH, "a") as f:
-        f.write(string + end)
+import json
 
 def avg(x: Iterable):
     if len(x) == 0:
         return 0
     return sum(x) / len(x)
 
-class WordleSimulator:
-    def __init__(self, all_words_path: str = "./words/official_wordle_word_list.json",
-                 freq_words_path: str = "./words/five_letter_words_order_by_freq.json"):
-        self.all_words: List[str] = self._load_words(all_words_path)
-        self.freq_order: List[str] = self._load_words(freq_words_path)
-        self.freq_dict: Dict[str, int] = {word: idx for idx, word in enumerate(self.freq_order)}
+class WordleSimulator(BaseWordle):
+    def __init__(self, use_tqdm = False):
+        super().__init__(use_tqdm)
 
-    def _load_words(self, path: str) -> List[str]:
-        try:
-            with open(path, 'r', encoding='utf-8') as f:
-                data = json.load(f)
-            words = [w.strip().upper() for w in data if len(w.strip()) == 5]
-            log(f"Loaded {len(words)} words from {path}")
-            return words
-        except Exception as e:
-            log(f"Error loading {path}: {e}")
-            return []
+        self.all_words_persistence: List[str] = self._load_words(self.all_words_path)
+        self.possible_words_persistence: Set[str] = set(self._load_words(self.possible_words_path))
 
-    def normalize_feedback(self, guess: str, feedback: str):
-        """
-        Apply implicit yellow patch for real wordle feedback
-        eg. guess = eieio, feedback = YYBBB
-        output: YYYYB
-        """
-        feedback = feedback.upper()
-        result = [letter for letter in feedback]
-        for i in range(len(feedback)):
-            if feedback[i] == "Y":
-                for j in range(i+1, len(guess), 1):
-                    if guess[j] == guess[i]:
-                        result[j] = "Y"
+    def reset(self):
+        self.all_words = copy.deepcopy(self.all_words_persistence)
+        self.possible_words = copy.deepcopy(self.possible_words_persistence)
+        self.guess_history: List[Tuple[str, str]] = []
+        # log(f"{len(self.all_words) = }")
+        # log(f"{len(self.possible_words) = }")
 
-        return "".join(result)
+    def save_guess_histories(self):
+        filename = f"simulator_guess_histories_{datetime.now().strftime("%Y-%m-%d_%H-%M-%S")}.json"
+        dir = Path("./output/")
+        dir.mkdir(parents=True, exist_ok=True)
 
-    def get_feedback(self, guess: str, secret: str) -> str:
-        """Correct Wordle feedback (greens first, then yellows)."""
-        guess = guess.upper()
-        secret = secret.upper()
-        result = ['B'] * 5
+        with open(dir / filename, "w") as f:
+            json.dump(self.guess_histories, f, indent=4)
 
-        # Greens
-        for i in range(5):
-            if guess[i] == secret[i]:
-                result[i] = 'G'
+    def print_statistics(self):
+        log()
+        log("===== STATISTICS REPORT =====")
+        log(f"First opener used: {self.first_opener}")
 
-        # Yellows
-        for i in range(5):
-            if result[i] == 'B':
-                letter = guess[i]
-                if letter in secret:
-                    result[i] = 'Y'
+        guesses_taken = [len(hist) for hist in self.guess_histories]
+        log("Guesses taken distribution:")
+        for i in range(1, 7):
+            log(f"{i}: {guesses_taken.count(i)}")
 
-        return ''.join(result)
-
-    def update_possible_words(self, guess: str, feedback: str):
-        feedback = feedback.upper()
-        self.possible_words = {
-            w for w in self.possible_words
-            if self.get_feedback(guess, w) == feedback
-        }
-        self.guess_history.append((guess.upper(), feedback))
-
-    def compute_entropy(self, guess: str, possible: List[str]) -> float:
-        """Shannon entropy for a guess."""
-        if not possible:
-            return 0.0
-
-        pattern_counts: Dict[str, int] = defaultdict(int)
-        for secret in possible:
-            fb = self.get_feedback(guess, secret)
-            pattern_counts[fb] += 1
-
-        total = len(possible)
-        entropy = 0.0
-        for count in pattern_counts.values():
-            if count > 0:
-                p = count / total
-                entropy -= p * math.log2(p)
-        return entropy
-
-    def find_best_guesses(self) -> Tuple[str, float]:
-        """Return a list of word-entropy tuples sorted by entropy by descending order."""
-        if len(self.possible_words) <= 1:
-            return next(iter(self.possible_words), ""), 0.0
-
-        possible_list = list(self.possible_words)
-        candidates = self.all_words
-
-        word_entropy: List[Tuple[str, int]] = []
-
-        for cand in candidates:
-            ent = self.compute_entropy(cand, possible_list)
-            word_entropy.append((cand, ent))
-
-        sorted_word_entropy = sorted(word_entropy, key=lambda x: x[1], reverse=True)
-        return sorted_word_entropy
-
-    def get_sorted_possible(self) -> List[str]:
-        """Possible words sorted by frequency."""
-        return sorted(
-            self.possible_words,
-            key=lambda w: self.freq_dict.get(w, 999999)
-        )
-
-    def is_valid_feedback(self, fb: str):
-        fb = fb.upper()
-        for letter in fb:
-            if letter not in ["G", "Y", "B"]:
-                return False
-        return True
-
-    def is_in_word_list(self, word: str):
-        return word in self.all_words
+        log(f"Average guesses taken: {avg(guesses_taken):.3f}")
+        log(f"Average time taken per game: {avg(self.time_taken):.3f}s")
+        log(f"Average time taken per round: {sum(self.time_taken) / sum(guesses_taken):.3f}s")
+        log(f"Success rate: {len(guesses_taken) / self.games_played * 100:.3f}% ({len(guesses_taken)}/{self.games_played})")  # couldnt care less about ZeroDivisionError here
 
     def play_one_game(self, secret: str):
         """
         Simulates playing one game of wordle using optimal approach.
         secret: wordle answer
         """
-        round_num = 1
-        while round_num <= 6:
-            if round_num == 1:
+        finished_rounds = 0
+        while finished_rounds < 6:
+            log(f"  => Playing round {finished_rounds + 1}")
+
+            if finished_rounds == 0:
                 best_guess = self.first_opener
             else:
                 word_entropy = self.find_best_guesses()
@@ -158,54 +70,48 @@ class WordleSimulator:
             fb = self.get_feedback(guess, secret)
 
             self.update_possible_words(guess, fb)
+            finished_rounds += 1
+
             if len(self.possible_words) == 1:
+                finished_rounds += 1
+                self.guess_history.append((next(iter(self.possible_words)), "GGGGG"))
                 break
 
-            round_num += 1
+            assert len(self.possible_words) >= 1
 
         if len(self.possible_words) == 1:
-            log(f"Answer found after {round_num} rounds. The answer is {next(iter(self.possible_words))}")
+            log(f"-> Answer found after {finished_rounds} rounds. The answer is {next(iter(self.possible_words))}")
         else:
-            log(f"Answer not found after 6 rounds. The answer is {secret}")
+            log(f"-> Answer not found after 6 rounds. The answer is {secret}")
 
-        return round_num
+        return finished_rounds
 
     def simulate(self, n=100, first_opener="TARES"):
         log("===== SIMULATION START =====")
         log("Press CTRL+C to terminate")
         try:
             self.first_opener = first_opener
-            guesses_taken = []
-            time_taken = []
-            games_played = 0
+            self.guess_histories = []
+            self.time_taken = []
+            self.games_played = 0
             for i in range(n):
                 log(f"-> GAME {i}/{n}")
                 timestamp = time.time_ns()
 
-                self.possible_words: Set[str] = set(self.all_words)
-                self.guess_history: List[Tuple[str, str]] = []
+                self.reset()
 
-                secret = random.choice(self.all_words)
+                secret = random.choice(list(self.possible_words))
                 guesses = self.play_one_game(secret)
                 if guesses <= 6:
-                    guesses_taken.append(guesses)
-                    time_taken.append((time.time_ns() - timestamp) * 1e-9)
-                games_played += 1
+                    self.guess_histories.append(self.guess_history)
+                    self.time_taken.append((time.time_ns() - timestamp) * 1e-9)
+                self.games_played += 1
         except KeyboardInterrupt:
             pass  # intended way of terminating
         finally:  # potential race conditions on every variable but i dont care
-            log()
-            log("===== STATISTICS REPORT =====")
-            log(f"First opener used: {first_opener}")
-            log("Guesses taken distribution:")
-            for i in range(1, 7):
-                log(f"{i}: {guesses_taken.count(i)}")
-
-            log(f"Average guesses taken: {avg(guesses_taken):.3f}")
-            log(f"Average time taken per game: {avg(time_taken):.3f}s")
-            log(f"Average time taken per round: {sum(time_taken) / sum(guesses_taken):.3f}s")
-            log(f"Success rate: {len(guesses_taken) / games_played * 100:.3f}%")  # couldnt care less about ZeroDivisionError here
+            self.print_statistics()
+            self.save_guess_histories()
 
 if __name__ == "__main__":
     sim = WordleSimulator()
-    sim.simulate(n=10000, first_opener="TARES")
+    sim.simulate(n=5, first_opener="TARES")
