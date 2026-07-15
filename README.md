@@ -2,7 +2,9 @@
 
 A wordle solver that uses information theory approach to effectively solve the game of wordle.
 
-The word list is pulled directly from the nytimes wordle source code, see https://www.nytimes.com/games-assets/v2/62.dd5228399a9dc7141388.js. Please do not hesitate to inform me if there is a more accurate word list(s).
+The wordle answers and allowed guesses are from https://gist.github.com/cfreshman/a03ef2cba789d8cf00c08f767e0fad7b and https://gist.github.com/cfreshman/8b92bc418b43096094cf5d1b0eea8f84 respectively.
+
+Please do not hesitate to inform me if there is a more accurate word list(s).
 
 ## The Algorithm
 
@@ -16,27 +18,24 @@ In each round of the game:
 
 ## Performance
 
-This solver yields 100% success rate with ~650 trials of games.
+This solver yields 100% success rate for all 2315 words.
 
-For simulating 10000 games, here is the statistics report:
-
+Here is the complete statistics report:
 ```
 ===== STATISTICS REPORT =====
-First opener used: TARES (Max entropy)
+First opener used: TARES
 Guesses taken distribution:
-1: 19
-2: 1110
-3: 5279
-4: 3124
-5: 434
-6: 33
-Average guesses taken: 3.294
-Average time taken per game: 5.211s
-Average time taken per round: 1.582s
-Success rate: 99.990% (9999/10000)
+1: 0
+2: 26
+3: 874
+4: 1309
+5: 102
+6: 4
+Average guesses taken: 3.647516198704104
+Average time taken per game: 1.917801373360224s
+Average time taken per round: 0.5257828255955611s
+Success rate: 100.0% (2315/2315)
 ```
-
-The word that the solver failed to solve is ZILLS.
 
 ## How to use
 
