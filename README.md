@@ -4,7 +4,7 @@ A wordle solver that uses information theory approach to effectively solve the g
 
 The wordle answers and allowed guesses are from https://gist.github.com/cfreshman/a03ef2cba789d8cf00c08f767e0fad7b and https://gist.github.com/cfreshman/8b92bc418b43096094cf5d1b0eea8f84 respectively.
 
-Please do not hesitate to inform me if there is a more accurate word list(s).
+Please do not hesitate to inform me if there are more accurate word lists.
 
 ## The Algorithm
 
@@ -53,3 +53,6 @@ pip install tqdm  # or any other methods of your liking
 ```bash
 python wordle_solver.py
 ```
+
+## Contribute
+Please do not hesitate to open an issue or a PR request!
