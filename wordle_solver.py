@@ -14,6 +14,13 @@ class WordleSolver(BaseWordle):
     def __init__(self, use_tqdm = True):
         super().__init__(use_tqdm)
 
+    def get_sorted_possible(self) -> list[str]:
+        """Possible words sorted by frequency."""
+        return sorted(
+            self.possible_words,
+            key=lambda w: self.freq_dict.get(w, 999999)
+        )
+
     def play(self, evaluate_entropy_in_first_round: bool = False):
         log("===== Wordle Solver (Entropy-based) =====")
         log(f"Recommended first guess: TARES, SALET, CRANE, etc")

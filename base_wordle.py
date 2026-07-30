@@ -153,13 +153,6 @@ class BaseWordle:
 
         return sorted(word_entropy, key=lambda x: x[1], reverse=True)
 
-    def get_sorted_possible(self) -> List[str]:
-        """Possible words sorted by frequency."""
-        return sorted(
-            self.possible_words,
-            key=lambda w: self.freq_dict.get(w, 999999)
-        )
-
     def is_valid_feedback(self, fb: str) -> bool:
         fb = fb.upper()
         return len(fb) == 5 and all(letter in "GYB" for letter in fb)
