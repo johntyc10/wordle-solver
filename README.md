@@ -39,12 +39,17 @@ Success rate: 100.0% (2315/2315)
 
 ## How to use
 
-1. (Optional) Install tqdm module
+1. Clone the repository:
+```bash
+git clone https://github.com/johntyc10/wordle-solver.git && cd wordle-solver
+```
+
+2. (Optional) Install tqdm module
 ```bash
 pip install tqdm  # or any other methods of your liking
 ```
 
-2. Run wordle_solver.py
+3. Run wordle_solver.py
 ```bash
 python wordle_solver.py
 ```
