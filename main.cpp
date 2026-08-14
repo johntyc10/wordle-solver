@@ -17,7 +17,9 @@ class WordleSolver {
     public:
         vector<string> play();
 
-        void debug();
+        void debug() {
+            cout << "WordleSolver.debug() called." << endl;
+        }
 
     private:
         void loadWords() {
@@ -59,6 +61,17 @@ class WordleSolver {
             }
 
             return result;
+        }
+
+        void updateWordList(string guess, array<FeedbackColor, 5> feedback) {
+            int i = 0;
+            while (i < wordList.size()) {
+                if (getFeedback(guess, wordList[i]) != feedback) {
+                    wordList.erase(wordList.begin() + i);
+                    continue;  // not incrementing i
+                }
+                i++;
+            }
         }
 };
 
