@@ -4,6 +4,7 @@
 #include <fstream>
 #include <cmath>
 #include <algorithm>
+#include <cassert>
 using namespace std;
 
 enum FeedbackColor {
@@ -44,9 +45,44 @@ struct PatternCounts {
     }
 };
 
+struct Top5BestGuesses {
+    array<pair<string, double>, 5> topGuesses;
+    int size = 0;
+
+    void addIfTop5(pair<string, double> element) {
+        if (size < 5) {
+            topGuesses[size] = element;
+            size++;
+            return;
+        }
+
+        double entropy = element.second;
+
+        for (int i = 0; i < size; i++) {
+            if (entropy < topGuesses[i].second) {  // the lower the entropy, the better the guess
+                insert(element, i);
+                return;
+            }
+        }
+    }
+
+    void insert(pair<string, double> element, int index) {
+        // insert element to index
+        for (int i = size - 2; i >= index; i--) {
+            topGuesses[i + 1] = topGuesses[i];
+        }
+        topGuesses[index] = element;
+    }
+
+    array<pair<string, double>, 5> array() {
+        return topGuesses;
+    }
+};
+
 class WordleSolver {
     vector<string> answerList;
-    vector<string> wordList;
+    vector<string> allWords;
+    vector<string> possibleWords;
 
     public:
         vector<string> play();
@@ -66,9 +102,10 @@ class WordleSolver {
 
             ifstream wordListFile("./words/nyt-wordle-allowed-guesses-2026-03-06.txt");
             while (getline(wordListFile, word)) {
-                wordList.push_back(word);
+                allWords.push_back(word);
+                possibleWords.push_back(word);
             }
-            cout << "Loaded " << wordList.size() << " words from word list." << endl;
+            cout << "Loaded " << allWords.size() << " words from word list." << endl;
         }
 
         array<FeedbackColor, 5> getFeedback(string guess, string secret) {
@@ -97,11 +134,11 @@ class WordleSolver {
             return result;
         }
 
-        void updateWordList(string guess, array<FeedbackColor, 5> feedback) {
+        void updatePossibleWords(string guess, array<FeedbackColor, 5> feedback) {
             int i = 0;
-            while (i < wordList.size()) {
-                if (getFeedback(guess, wordList[i]) != feedback) {
-                    wordList.erase(wordList.begin() + i);
+            while (i < possibleWords.size()) {
+                if (getFeedback(guess, possibleWords[i]) != feedback) {
+                    possibleWords.erase(possibleWords.begin() + i);
                     continue;  // not incrementing i
                 }
                 i++;
@@ -110,11 +147,10 @@ class WordleSolver {
 
         double computeEntropy(string guess) {
             // shannon entropy for a guess.
-            if (wordList.empty())
-                return 0.0;
+            assert(!possibleWords.empty());
 
             PatternCounts patternCounts;
-            for (auto secret : wordList) {
+            for (auto secret : possibleWords) {
                 array<FeedbackColor, 5> fb = getFeedback(guess, secret);
                 patternCounts.add(fb);
             }
@@ -128,6 +164,18 @@ class WordleSolver {
             }
 
             return entropy;
+        }
+
+        array<pair<string, double>, 5> findBestGuesses(int top_n = 5) {
+            assert(!possibleWords.empty());
+
+            Top5BestGuesses topGuesses;
+            for (string candidate : allWords) {
+                double entropy = computeEntropy(candidate);
+                topGuesses.addIfTop5(make_pair(candidate, entropy));
+            }
+
+            return topGuesses.array();
         }
 };
 
