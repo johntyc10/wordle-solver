@@ -2,12 +2,46 @@
 #include <vector>
 #include <array>
 #include <fstream>
+#include <cmath>
+#include <algorithm>
 using namespace std;
 
 enum FeedbackColor {
     GREEN,
     YELLOW,
     BLACK
+};
+
+struct PatternCounts {
+    vector<pair<int, int>> patternCounts;
+
+    int patternDigest(array<FeedbackColor, 5>& feedback) {
+        // assign a unique value for each feedback, like hash
+        int digest = 0;
+        for (int i = 0; i < 5; i++) {
+            digest += feedback[i] * pow(10, i);
+        }
+        return digest;
+    }
+
+    void add(array<FeedbackColor, 5>& feedback) {
+        int feedbackDigest = patternDigest(feedback);
+        auto it = find(patternCounts.begin(), patternCounts.end(), feedbackDigest);
+
+        if (it != patternCounts.end()){
+            int index = distance(patternCounts.begin(), it);
+            patternCounts[index].second++;
+        } else
+            patternCounts.push_back(make_pair(feedbackDigest, 1));
+    }
+
+    int getCountByIndex(int index) {
+        return patternCounts[index].second;
+    }
+
+    int size() {
+        return patternCounts.size();
+    }
 };
 
 class WordleSolver {
@@ -72,6 +106,28 @@ class WordleSolver {
                 }
                 i++;
             }
+        }
+
+        double computeEntropy(string guess) {
+            // shannon entropy for a guess.
+            if (wordList.empty())
+                return 0.0;
+
+            PatternCounts patternCounts;
+            for (auto secret : wordList) {
+                array<FeedbackColor, 5> fb = getFeedback(guess, secret);
+                patternCounts.add(fb);
+            }
+
+            int total = patternCounts.size();
+            double entropy = 0.0;
+            for (int i = 0; i < total; i++) {
+                int count = patternCounts.getCountByIndex(i);
+                double p = count / (double) total;
+                entropy -= p * log2(p);
+            }
+
+            return entropy;
         }
 };
 
