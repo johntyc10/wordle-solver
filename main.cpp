@@ -73,10 +73,6 @@ struct Top5BestGuesses {
         }
         topGuesses[index] = element;
     }
-
-    array<pair<string, double>, 5> array() {
-        return topGuesses;
-    }
 };
 
 class WordleSolver {
@@ -166,7 +162,7 @@ class WordleSolver {
             return entropy;
         }
 
-        array<pair<string, double>, 5> findBestGuesses(int top_n = 5) {
+        Top5BestGuesses findBestGuesses() {
             assert(!possibleWords.empty());
 
             Top5BestGuesses topGuesses;
@@ -175,7 +171,7 @@ class WordleSolver {
                 topGuesses.addIfTop5(make_pair(candidate, entropy));
             }
 
-            return topGuesses.array();
+            return topGuesses;
         }
 };
 
