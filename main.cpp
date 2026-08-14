@@ -73,15 +73,61 @@ struct Top5BestGuesses {
         }
         topGuesses[index] = element;
     }
+
+    pair<string, double> get(int index) {
+        // get element by index
+        return topGuesses[index];
+    }
 };
 
 class WordleSolver {
-    vector<string> answerList;
     vector<string> allWords;
     vector<string> possibleWords;
 
     public:
-        vector<string> play();
+        vector<string> play() {
+            cout << "===== Wordle Solver (C++ version) =====" << endl;
+            cout << "Recommended first guess: TARES, SALET, CRANE, etc" << endl;
+            cout << "Tip: TARES is the best first guess entropy-wise." << endl;
+
+            int roundNum = 1;
+            while (possibleWords.size() > 1 && roundNum <= 6) {
+                cout << endl;
+                cout << "--- Round " << roundNum << " | " << possibleWords.size() << " possible words ---" << endl;
+
+                cout << "Evaluating best guesses..." << endl;
+                Top5BestGuesses topGuesses = findBestGuesses();
+                cout << "Done!" << endl;
+
+                string topGuess = topGuesses.get(0).first;
+                cout << "Top guess:\t" << topGuesses.get(0).first << " (entropy: " << topGuesses.get(0).second << ")" << endl;
+                for (int i = 1; i < topGuesses.size; i++) {
+                    string word = topGuesses.get(i).first;
+                    double entropy = topGuesses.get(i).second;
+                    cout << i + 1 << "th guess: " << word << " (entropy: " << entropy << ")" << endl;
+                }
+
+                cout << endl;
+
+                // User input for guess
+                string guessInput;
+                while (1) {
+                    cout << "What is your guess? (Enter = top): " << endl;
+                    cin >> guessInput;
+                    transform(guessInput.begin(), guessInput.end(), guessInput.begin(), ::toupper);
+                    if (guessInput.empty() || isInWordList(guessInput)) {
+                        break;
+                    }
+                    cout << "Invalid input, please try again.";
+                }
+                string guess;
+                guess = (guessInput.empty()) ? topGuess : guessInput;
+
+                cout << guess << " is chosen." << endl;
+
+                // TODO: User input for feedback
+            }
+        }
 
         void debug() {
             cout << "WordleSolver.debug() called." << endl;
@@ -92,14 +138,13 @@ class WordleSolver {
             ifstream answerListFile("./words/wordle-answers-alphabetical.txt");
             string word;
             while (getline(answerListFile, word)) {
-                answerList.push_back(word);
+                possibleWords.push_back(word);
             }
-            cout << "Loaded " << answerList.size() << " words from answer list." << endl;
+            cout << "Loaded " << possibleWords.size() << " words from answer list." << endl;
 
             ifstream wordListFile("./words/nyt-wordle-allowed-guesses-2026-03-06.txt");
             while (getline(wordListFile, word)) {
                 allWords.push_back(word);
-                possibleWords.push_back(word);
             }
             cout << "Loaded " << allWords.size() << " words from word list." << endl;
         }
@@ -172,6 +217,11 @@ class WordleSolver {
             }
 
             return topGuesses;
+        }
+
+        bool isInWordList(string word) {
+            auto it = find(allWords.begin(), allWords.end(), word);
+            return it == allWords.end();
         }
 };
 
