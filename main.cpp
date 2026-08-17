@@ -5,44 +5,13 @@
 #include <cmath>
 #include <algorithm>
 #include <cassert>
+#include <unordered_map>
 using namespace std;
 
 enum FeedbackColor {
     GREEN,
     YELLOW,
     BLACK
-};
-
-struct PatternCounts {
-    vector<pair<int, int>> patternCounts;
-
-    int patternDigest(array<FeedbackColor, 5>& feedback) {
-        // assign a unique value for each feedback, like hash
-        int digest = 0;
-        for (int i = 0; i < 5; i++) {
-            digest += feedback[i] * pow(10, i);
-        }
-        return digest;
-    }
-
-    void add(array<FeedbackColor, 5>& feedback) {
-        int feedbackDigest = patternDigest(feedback);
-        auto it = find(patternCounts.begin(), patternCounts.end(), feedbackDigest);
-
-        if (it != patternCounts.end()){
-            int index = distance(patternCounts.begin(), it);
-            patternCounts[index].second++;
-        } else
-            patternCounts.push_back(make_pair(feedbackDigest, 1));
-    }
-
-    int getCountByIndex(int index) {
-        return patternCounts[index].second;
-    }
-
-    int size() {
-        return patternCounts.size();
-    }
 };
 
 struct Top5BestGuesses {
@@ -59,7 +28,7 @@ struct Top5BestGuesses {
         double entropy = element.second;
 
         for (int i = 0; i < size; i++) {
-            if (entropy < topGuesses[i].second) {  // the lower the entropy, the better the guess
+            if (entropy > topGuesses[i].second) {
                 insert(element, i);
                 return;
             }
@@ -85,7 +54,9 @@ class WordleSolver {
     vector<string> possibleWords;
 
     public:
-        vector<string> play() {
+        void play() {
+            loadWords();
+
             cout << "===== Wordle Solver (C++ version) =====" << endl;
             cout << "Recommended first guess: TARES, SALET, CRANE, etc" << endl;
             cout << "Tip: TARES is the best first guess entropy-wise." << endl;
@@ -100,7 +71,7 @@ class WordleSolver {
                 cout << "Done!" << endl;
 
                 string topGuess = topGuesses.get(0).first;
-                cout << "Top guess:\t" << topGuesses.get(0).first << " (entropy: " << topGuesses.get(0).second << ")" << endl;
+                cout << "Top guess: " << topGuesses.get(0).first << " (entropy: " << topGuesses.get(0).second << ")" << endl;
                 for (int i = 1; i < topGuesses.size; i++) {
                     string word = topGuesses.get(i).first;
                     double entropy = topGuesses.get(i).second;
@@ -125,7 +96,42 @@ class WordleSolver {
 
                 cout << guess << " is chosen." << endl;
 
-                // TODO: User input for feedback
+                // User input for feedback
+                string fbInput;
+                while (1) {
+                    cout << "Feedback (e.g. YGBBG, case insensitive): " << endl;
+                    cin >> fbInput;
+                    transform(fbInput.begin(), fbInput.end(), fbInput.begin(), ::toupper);
+                    if (isValidFeedback(fbInput)) {
+                        break;
+                    }
+                    cout << "Invalid input, please try again." << endl;
+                }
+
+                cout << "The feedback is " << fbInput << endl;
+
+                array<FeedbackColor, 5> fb;
+                for (int i = 0; i < 5; i++) {
+                    if (fbInput[i] == 'G')
+                        fb[i] = GREEN;
+                    else if (fbInput[i] == 'Y')
+                        fb[i] = YELLOW;
+                    else if (fbInput[i] == 'B')
+                        fb[i] = BLACK;
+                    else
+                        cerr << "Invalid feedback" << endl;
+                        exit(1);
+                }
+
+                updatePossibleWords(guess, fb);
+                roundNum += 1;
+            }
+
+            cout << endl;
+            if (possibleWords.size() == 1) {
+                cout << "The answer is: " << possibleWords[0] << endl;
+            } else {
+                cout << "No possible words are left. Check your input and try again." << endl;
             }
         }
 
@@ -138,12 +144,14 @@ class WordleSolver {
             ifstream answerListFile("./words/wordle-answers-alphabetical.txt");
             string word;
             while (getline(answerListFile, word)) {
+                transform(word.begin(), word.end(), word.begin(), ::toupper);
                 possibleWords.push_back(word);
             }
             cout << "Loaded " << possibleWords.size() << " words from answer list." << endl;
 
             ifstream wordListFile("./words/nyt-wordle-allowed-guesses-2026-03-06.txt");
             while (getline(wordListFile, word)) {
+                transform(word.begin(), word.end(), word.begin(), ::toupper);
                 allWords.push_back(word);
             }
             cout << "Loaded " << allWords.size() << " words from word list." << endl;
@@ -154,7 +162,8 @@ class WordleSolver {
             array<FeedbackColor, 5> result;
             result.fill(BLACK);
 
-            array<int, 26> secretCount{};  // keeps track of which letters should be assigned yellow for secretCount[letter] times
+            array<int, 26> secretCount;  // keeps track of which letters should be assigned yellow for secretCount[letter] times
+            secretCount.fill(0);
             for (int i = 0; i < 5; i++) {
                 if (guess[i] == secret[i])
                     result[i] = GREEN;
@@ -190,16 +199,26 @@ class WordleSolver {
             // shannon entropy for a guess.
             assert(!possibleWords.empty());
 
-            PatternCounts patternCounts;
+            unordered_map<int, int> feedbackCounts;
             for (auto secret : possibleWords) {
                 array<FeedbackColor, 5> fb = getFeedback(guess, secret);
-                patternCounts.add(fb);
+                int fbDigest = feedbackDigest(fb);
+                cout << guess << " " << secret << endl;
+                for (int i = 0; i < 5; i++) {
+                    cout << fb[i] << " ";
+                }
+                cout << endl;
+                cout << fbDigest << endl;
+                if (feedbackCounts.contains(fbDigest)) {
+                    feedbackCounts[fbDigest]++;
+                } else {
+                    feedbackCounts[fbDigest] = 1;
+                }
             }
 
-            int total = patternCounts.size();
+            int total = feedbackCounts.size();
             double entropy = 0.0;
-            for (int i = 0; i < total; i++) {
-                int count = patternCounts.getCountByIndex(i);
+            for (const auto& [fb, count] : feedbackCounts) {
                 double p = count / (double) total;
                 entropy -= p * log2(p);
             }
@@ -207,13 +226,25 @@ class WordleSolver {
             return entropy;
         }
 
+        int feedbackDigest(array<FeedbackColor, 5> feedback) {
+            int digest = 0;
+            for (int i = 0; i < feedback.size(); i++) {
+                digest += feedback[i] * (int) pow(10, i);
+            }
+            return digest;
+        }
+
         Top5BestGuesses findBestGuesses() {
             assert(!possibleWords.empty());
 
+            int progress = 0;
             Top5BestGuesses topGuesses;
             for (string candidate : allWords) {
                 double entropy = computeEntropy(candidate);
                 topGuesses.addIfTop5(make_pair(candidate, entropy));
+                progress++;
+                if (progress % 100 == 0)
+                    cout << "Progress: " << progress << "/" << allWords.size() << endl;
             }
 
             return topGuesses;
@@ -223,10 +254,27 @@ class WordleSolver {
             auto it = find(allWords.begin(), allWords.end(), word);
             return it == allWords.end();
         }
+
+        bool isValidFeedback(string feedback) {
+            if (feedback.size() != 5)
+                return false;
+
+            for (char letter : feedback) {
+                if (
+                    letter != 'G' ||
+                    letter != 'Y' ||
+                    letter != 'B'
+                ) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
 };
 
 
 int main() {
     WordleSolver solver;
-    solver.debug();
+    solver.play();
 }
