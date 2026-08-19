@@ -86,10 +86,11 @@ class WordleSolver {
                     cout << "What is your guess? (Enter = top): " << endl;
                     cin >> guessInput;
                     transform(guessInput.begin(), guessInput.end(), guessInput.begin(), ::toupper);
+                    cout << "Your input is " << guessInput << "." << endl;
                     if (guessInput.empty() || isInWordList(guessInput)) {
                         break;
                     }
-                    cout << "Invalid input, please try again.";
+                    cout << "Invalid input, please try again." << endl;
                 }
                 string guess;
                 guess = (guessInput.empty()) ? topGuess : guessInput;
@@ -102,6 +103,7 @@ class WordleSolver {
                     cout << "Feedback (e.g. YGBBG, case insensitive): " << endl;
                     cin >> fbInput;
                     transform(fbInput.begin(), fbInput.end(), fbInput.begin(), ::toupper);
+                    cout << "Your feedback input is " << fbInput << "." << endl;
                     if (isValidFeedback(fbInput)) {
                         break;
                     }
@@ -118,9 +120,10 @@ class WordleSolver {
                         fb[i] = YELLOW;
                     else if (fbInput[i] == 'B')
                         fb[i] = BLACK;
-                    else
+                    else {
                         cerr << "Invalid feedback" << endl;
                         exit(1);
+                    }
                 }
 
                 updatePossibleWords(guess, fb);
@@ -137,6 +140,9 @@ class WordleSolver {
 
         void debug() {
             cout << "WordleSolver.debug() called." << endl;
+            cout << isValidFeedback("BBBBB") << endl;
+            cout << isValidFeedback("BBGGB") << endl;
+            cout << isValidFeedback("HHHHH") << endl;
         }
 
     private:
@@ -203,12 +209,12 @@ class WordleSolver {
             for (auto secret : possibleWords) {
                 array<FeedbackColor, 5> fb = getFeedback(guess, secret);
                 int fbDigest = feedbackDigest(fb);
-                cout << guess << " " << secret << endl;
-                for (int i = 0; i < 5; i++) {
-                    cout << fb[i] << " ";
-                }
-                cout << endl;
-                cout << fbDigest << endl;
+                // cout << guess << " " << secret << endl;
+                // for (int i = 0; i < 5; i++) {
+                //     cout << fb[i] << " ";
+                // }
+                // cout << endl;
+                // cout << fbDigest << endl;
                 if (feedbackCounts.contains(fbDigest)) {
                     feedbackCounts[fbDigest]++;
                 } else {
@@ -216,10 +222,10 @@ class WordleSolver {
                 }
             }
 
-            int total = feedbackCounts.size();
+            double total = (double) possibleWords.size();
             double entropy = 0.0;
             for (const auto& [fb, count] : feedbackCounts) {
-                double p = count / (double) total;
+                double p = count / total;
                 entropy -= p * log2(p);
             }
 
@@ -244,7 +250,7 @@ class WordleSolver {
                 topGuesses.addIfTop5(make_pair(candidate, entropy));
                 progress++;
                 if (progress % 100 == 0)
-                    cout << "Progress: " << progress << "/" << allWords.size() << endl;
+                    cout << "Progress: " << progress << "/" << allWords.size() << " (" << progress / (double) allWords.size() * 100 << "%)" << endl;
             }
 
             return topGuesses;
@@ -252,17 +258,18 @@ class WordleSolver {
 
         bool isInWordList(string word) {
             auto it = find(allWords.begin(), allWords.end(), word);
-            return it == allWords.end();
+            return it != allWords.end();
         }
 
         bool isValidFeedback(string feedback) {
-            if (feedback.size() != 5)
+            if (feedback.size() != 5) {
                 return false;
+            }
 
             for (char letter : feedback) {
                 if (
-                    letter != 'G' ||
-                    letter != 'Y' ||
+                    letter != 'G' &&
+                    letter != 'Y' &&
                     letter != 'B'
                 ) {
                     return false;

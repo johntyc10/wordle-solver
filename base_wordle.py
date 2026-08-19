@@ -159,3 +159,10 @@ class BaseWordle:
 
     def is_in_word_list(self, word: str) -> bool:
         return word in self.all_words
+
+
+if __name__ == "__main__":
+    base = BaseWordle()
+    base.compute_entropy(
+        
+    )
