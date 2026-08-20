@@ -292,7 +292,7 @@ class WordleSolver {
                 double entropy = computeEntropy(candidate);
                 topGuesses.addIfTop5(make_pair(candidate, entropy));
                 progress++;
-                if (progress % 1000 == 0 || progress == candidateWords.size()) {
+                if (progress % 1000 == 1 || progress == candidateWords.size()) {
                     cout << "\33[2K\r";  // clear current line
                     cout << "Progress: " << progress << "/" << candidateWords.size() << " (" << progress / (double) candidateWords.size() * 100 << "%)";
                     cout.flush();
