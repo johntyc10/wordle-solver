@@ -14,6 +14,11 @@ enum FeedbackColor {
     BLACK
 };
 
+enum Difficulty {
+    EASY,
+    HARD
+};
+
 struct Top5BestGuesses {
     array<pair<string, double>, 5> topGuesses;
     int size = 0;
@@ -52,20 +57,42 @@ struct Top5BestGuesses {
 class WordleSolver {
     vector<string> allWords;
     vector<string> possibleWords;
+    Difficulty difficulty;
+    array<string, 2> difficultyString;
 
     public:
         void play() {
-            loadWords();
+            init();
             cout << endl;
 
             cout << "===== Wordle Solver (C++ version) =====" << endl;
             cout << "Recommended first guess: TARES, SALET, CRANE, etc" << endl;
             cout << "Tip: TARES is the best first guess entropy-wise." << endl;
 
+            while (1) {
+                string _ans;
+                cout << "Play in hard mode? [Y/n]: ";
+                getline(cin, _ans);
+                if (_ans.empty() || _ans == "Y" || _ans == "y") {
+                    difficulty = HARD;
+                    break;
+                }
+                else if (_ans == "N" || _ans == "n") {
+                    difficulty = EASY;
+                    break;
+                }
+                else {
+                    cout << "Invalid input, please input either \"y\" or \"n\"." << endl;
+                }
+            }
+
+            cout << endl;
+            cout << "Playing wordle in " << difficultyString[difficulty] << " mode." << endl;
+
             int roundNum = 1;
             while (possibleWords.size() > 1 && roundNum <= 6) {
                 cout << endl;
-                cout << "--- Round " << roundNum << " | " << possibleWords.size() << " possible words ---" << endl;
+                cout << "--- Round " << roundNum << " | " << possibleWords.size() << " possible words (" << difficultyString[difficulty] << " mode) ---" << endl;
 
                 string topGuess;
                 if (roundNum == 1) {
@@ -77,7 +104,7 @@ class WordleSolver {
                     cout << "5th guess: RAISE (entropy: 5.87791)" << endl;
                 } else {
                     cout << "Evaluating best guesses..." << endl;
-                    Top5BestGuesses topGuesses = findBestGuesses();
+                    Top5BestGuesses topGuesses = findBestGuesses(difficulty);
                     cout << "Done!" << endl;
 
                     topGuess = topGuesses.get(0).first;
@@ -155,6 +182,12 @@ class WordleSolver {
         }
 
     private:
+        void init() {
+            loadWords();
+            difficultyString[EASY] = "EASY";
+            difficultyString[HARD] = "HARD";
+        }
+
         void loadWords() {
             ifstream answerListFile("./words/wordle-answers-alphabetical.txt");
             string word;
@@ -218,12 +251,6 @@ class WordleSolver {
             for (auto secret : possibleWords) {
                 array<FeedbackColor, 5> fb = getFeedback(guess, secret);
                 int fbDigest = feedbackDigest(fb);
-                // cout << guess << " " << secret << endl;
-                // for (int i = 0; i < 5; i++) {
-                //     cout << fb[i] << " ";
-                // }
-                // cout << endl;
-                // cout << fbDigest << endl;
                 if (feedbackCounts.contains(fbDigest)) {
                     feedbackCounts[fbDigest]++;
                 } else {
@@ -249,12 +276,15 @@ class WordleSolver {
             return digest;
         }
 
-        Top5BestGuesses findBestGuesses() {
+        Top5BestGuesses findBestGuesses(Difficulty difficulty) {
             assert(!possibleWords.empty());
+            assert(!allWords.empty());
+
+            vector<string> candidateWords = (difficulty == EASY) ? allWords : possibleWords;
 
             int progress = 0;
             Top5BestGuesses topGuesses;
-            for (string candidate : allWords) {
+            for (string candidate : candidateWords) {
                 double entropy = computeEntropy(candidate);
                 topGuesses.addIfTop5(make_pair(candidate, entropy));
                 progress++;
