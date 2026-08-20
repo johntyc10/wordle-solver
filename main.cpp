@@ -71,13 +71,13 @@ class WordleSolver {
 
             while (1) {
                 string _ans;
-                cout << "Play in hard mode? [Y/n]: ";
+                cout << "Play in hard mode? [y/N]: ";
                 getline(cin, _ans);
-                if (_ans.empty() || _ans == "Y" || _ans == "y") {
+                if (_ans == "Y" || _ans == "y") {
                     difficulty = HARD;
                     break;
                 }
-                else if (_ans == "N" || _ans == "n") {
+                else if (_ans.empty() || _ans == "N" || _ans == "n") {
                     difficulty = EASY;
                     break;
                 }
