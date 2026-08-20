@@ -67,7 +67,9 @@ class WordleSolver {
 
             cout << "===== Wordle Solver (C++ version) =====" << endl;
             cout << "Recommended first guess: TARES, SALET, CRANE, etc" << endl;
-            cout << "Tip: TARES is the best first guess entropy-wise." << endl;
+            cout << "Tip: TARSE is the best first guess entropy-wise." << endl;
+            cout << "Note: Although TARSE a valid word in the official NYT wordle, it is not valid in wordle unlimited. For wordle unlimited, please use SOARE as the first opener instead." << endl;
+            cout << endl;
 
             while (1) {
                 string _ans;
