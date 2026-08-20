@@ -146,7 +146,11 @@ class WordleSolver {
                     cout << "Invalid input, please try again." << endl;
                 }
 
-                cout << "Your feedback input is " << fbInput << endl;
+                if (fbInput == "GGGGG") {
+                    cout << "GGs! Nice work!" << endl;
+                } else {
+                    cout << "Your feedback input is " << fbInput << endl;
+                }
 
                 array<FeedbackColor, 5> fb;
                 for (int i = 0; i < 5; i++) {
