@@ -56,6 +56,7 @@ class WordleSolver {
     public:
         void play() {
             loadWords();
+            cout << endl;
 
             cout << "===== Wordle Solver (C++ version) =====" << endl;
             cout << "Recommended first guess: TARES, SALET, CRANE, etc" << endl;
@@ -66,27 +67,36 @@ class WordleSolver {
                 cout << endl;
                 cout << "--- Round " << roundNum << " | " << possibleWords.size() << " possible words ---" << endl;
 
-                cout << "Evaluating best guesses..." << endl;
-                Top5BestGuesses topGuesses = findBestGuesses();
-                cout << "Done!" << endl;
+                string topGuess;
+                if (roundNum == 1) {
+                    topGuess = "TARSE";
+                    cout << "Top guess: TARSE (entropy: 5.94673)" << endl;
+                    cout << "2th guess: TIARE (entropy: 5.9312)" << endl;
+                    cout << "3th guess: SOARE (entropy: 5.88596)" << endl;
+                    cout << "4th guess: ROATE (entropy: 5.88278)" << endl;
+                    cout << "5th guess: RAISE (entropy: 5.87791)" << endl;
+                } else {
+                    cout << "Evaluating best guesses..." << endl;
+                    Top5BestGuesses topGuesses = findBestGuesses();
+                    cout << "Done!" << endl;
 
-                string topGuess = topGuesses.get(0).first;
-                cout << "Top guess: " << topGuesses.get(0).first << " (entropy: " << topGuesses.get(0).second << ")" << endl;
-                for (int i = 1; i < topGuesses.size; i++) {
-                    string word = topGuesses.get(i).first;
-                    double entropy = topGuesses.get(i).second;
-                    cout << i + 1 << "th guess: " << word << " (entropy: " << entropy << ")" << endl;
+                    topGuess = topGuesses.get(0).first;
+                    cout << "Top guess: " << topGuesses.get(0).first << " (entropy: " << topGuesses.get(0).second << ")" << endl;
+                    for (int i = 1; i < topGuesses.size; i++) {
+                        string word = topGuesses.get(i).first;
+                        double entropy = topGuesses.get(i).second;
+                        cout << i + 1 << "th guess: " << word << " (entropy: " << entropy << ")" << endl;
+                    }
                 }
-
                 cout << endl;
+
 
                 // User input for guess
                 string guessInput;
                 while (1) {
-                    cout << "What is your guess? (Enter = top): " << endl;
-                    cin >> guessInput;
+                    cout << "What is your guess? (Enter = top): ";
+                    getline(cin, guessInput);
                     transform(guessInput.begin(), guessInput.end(), guessInput.begin(), ::toupper);
-                    cout << "Your input is " << guessInput << "." << endl;
                     if (guessInput.empty() || isInWordList(guessInput)) {
                         break;
                     }
@@ -100,17 +110,16 @@ class WordleSolver {
                 // User input for feedback
                 string fbInput;
                 while (1) {
-                    cout << "Feedback (e.g. YGBBG, case insensitive): " << endl;
-                    cin >> fbInput;
+                    cout << "Feedback (e.g. YGBBG, case insensitive): ";
+                    getline(cin, fbInput);
                     transform(fbInput.begin(), fbInput.end(), fbInput.begin(), ::toupper);
-                    cout << "Your feedback input is " << fbInput << "." << endl;
                     if (isValidFeedback(fbInput)) {
                         break;
                     }
                     cout << "Invalid input, please try again." << endl;
                 }
 
-                cout << "The feedback is " << fbInput << endl;
+                cout << "Your feedback input is " << fbInput << endl;
 
                 array<FeedbackColor, 5> fb;
                 for (int i = 0; i < 5; i++) {
